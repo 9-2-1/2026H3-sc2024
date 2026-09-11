@@ -25,8 +25,8 @@
       "steps": "按 (x*2-1)*180 反算角度；核对是否映射为 -180°/+180°",
       "expected": "0→-180°，1→+180°",
       "status": "OK",
-      "actual": "归一化下界=0.0 上界=1.0；反解下界=-180.0°；返回类型 lo=NoneType hi=NoneType",
-      "seconds": 0.002
+      "actual": "归一化下界=0.0 上界=1.0；反解下界=-180.0°；返回类型 lo=ndarray hi=ndarray",
+      "seconds": 0.003
     },
     {
       "id": "TC-ALG-003",
@@ -68,7 +68,7 @@
       "expected": "正常返回动作，不抛异常",
       "status": "OK",
       "actual": "双参数调用成功，返回 ndarray",
-      "seconds": 0.028
+      "seconds": 0.001
     },
     {
       "id": "TC-ALG-006",
@@ -82,7 +82,7 @@
       "expected": "键盘事件被读取且不影响正常输出",
       "status": "OK",
       "actual": "getKeyboardEvents 调用 1 次，动作返回 ndarray",
-      "seconds": 0.002
+      "seconds": 0.001
     },
     {
       "id": "TC-ALG-007",
@@ -110,7 +110,7 @@
       "expected": "base_angles 保持首帧值不变",
       "status": "OK",
       "actual": "第2次调用后 base_angles=[-49.46, -57.6, -138.39, -164.01, -49.46, 0.0]（应保持首次值）",
-      "seconds": 0.003
+      "seconds": 0.002
     },
     {
       "id": "TC-ALG-009",
@@ -124,7 +124,7 @@
       "expected": "design_target 更新为新目标",
       "status": "OK",
       "actual": "design_target 已更新为 [0.1, 0.85, 0.2]",
-      "seconds": 0.002
+      "seconds": 0.003
     },
     {
       "id": "TC-ALG-010",
@@ -138,7 +138,7 @@
       "expected": "ball_target 更新为新障碍位置",
       "status": "OK",
       "actual": "ball_target [0.1, 0.6, 0.2] -> [-0.1, 0.6, 0.2]",
-      "seconds": 0.001
+      "seconds": 0.003
     },
     {
       "id": "TC-ALG-011",
@@ -166,7 +166,7 @@
       "expected": "最大姿态偏差 < 1e-4",
       "status": "OK",
       "actual": "最大姿态偏差 2.65e-06（Link 7，阈值 1e-4，已按行向量约定转置比对）",
-      "seconds": 0.0
+      "seconds": 0.001
     },
     {
       "id": "TC-ALG-013",
@@ -180,7 +180,7 @@
       "expected": "最大偏差 < 1e-6 m",
       "status": "OK",
       "actual": "30 组随机位姿最大位置偏差 0.00e+00 m（阈值 1e-6）",
-      "seconds": 0.017
+      "seconds": 0.014
     },
     {
       "id": "TC-ALG-014",
@@ -222,7 +222,7 @@
       "expected": "偏差 ≤ 0.05 m（抓取成功阈值）",
       "status": "NG",
       "actual": "与 env.get_dis() 夹爪中心最大偏差 0.07612 m（成功阈值 0.05 m）",
-      "seconds": 0.002
+      "seconds": 0.001
     },
     {
       "id": "TC-ALG-017",
@@ -234,9 +234,9 @@
       "input": "随机种子 1000 生成的目标与障碍",
       "steps": "取 alg.target，用模块自身 FK 算夹爪中心并与目标比较",
       "expected": "模型内偏差 ≤ 0.05 m",
-      "status": "NG",
-      "actual": "回合结束后，按模块自身 FK 计算 self.target 处夹爪中心距目标 0.11000 m（Muli=0.11000，阈值 0.05 m）",
-      "seconds": 0.146
+      "status": "OK",
+      "actual": "回合结束后，按模块自身 FK 计算 self.target 处夹爪中心距目标 0.04850 m（Muli=0.04850，阈值 0.05 m）",
+      "seconds": 0.116
     },
     {
       "id": "TC-ALG-018",
@@ -486,8 +486,8 @@
       "input": "bdb = 40°（A5=-90）",
       "steps": "检查 strategies 是否含 A1Left/A1Right",
       "expected": "两者均不含",
-      "status": "OK",
-      "actual": "bdb=40.0000° A5=-90.0 时 strategies=['A2Up', 'A3Up', 'A4Up']（不含 A1 方向）",
+      "status": "NG",
+      "actual": "bdb=40.0000° A5=-90.0 时 strategies=['A1Right', 'A2Up', 'A3Up', 'A4Up']（不含 A1 方向）",
       "seconds": 0.001
     },
     {
@@ -500,8 +500,8 @@
       "input": "MyCustomAlgorithm(A4=0, A5=-30, A6=45)，bdb=10°",
       "steps": "调用 get_action 后读取 A4/A5/A6",
       "expected": "A4=0, A5=-30, A6=45（覆盖查表结果 A5=-130）",
-      "status": "OK",
-      "actual": "DFL 覆盖后 A4=0.0 A5=-30.0 A6=45.0",
+      "status": "NT",
+      "actual": "TypeError: MyCustomAlgorithm.__init__() got an unexpected keyword argument 'A4'",
       "seconds": 0.001
     },
     {
@@ -515,7 +515,7 @@
       "steps": "调用 get_action，捕获数值异常",
       "expected": "不抛 arccos 定义域异常，返回动作或 None",
       "status": "OK",
-      "actual": "超程目标处理正常，返回 NoneType",
+      "actual": "超程目标处理正常，返回 ndarray",
       "seconds": 0.001
     },
     {
@@ -542,8 +542,8 @@
       "input": "起始关节角全 0、解算需超过 100° 变化的观测",
       "steps": "调用 get_action；对返回值执行 np.clip 模拟 env.step",
       "expected": "不返回 None，或调用方有明确处理，不导致运行中断",
-      "status": "NG",
-      "actual": "返回 None，env.step 中 np.clip 抛出 TypeError: '>=' not supported between instances of 'NoneType' and 'int'",
+      "status": "OK",
+      "actual": "未触发弃权路径，正常返回动作",
       "seconds": 0.001
     },
     {
@@ -558,7 +558,7 @@
       "expected": "动作量级与 1°/步 的预算相称，裁剪后不失真",
       "status": "OK",
       "actual": "50 组样本动作最大绝对值 100.000（env 侧裁剪为 [-1,1]，单位：度/步）",
-      "seconds": 0.073
+      "seconds": 0.057
     },
     {
       "id": "TC-ALG-041",
@@ -572,7 +572,7 @@
       "expected": "换回合后 step 重置为 1",
       "status": "OK",
       "actual": "连续 6 次后 step=6，换目标后 step=1（预期 1）",
-      "seconds": 0.009
+      "seconds": 0.007
     },
     {
       "id": "TC-ALG-042",
@@ -585,8 +585,8 @@
       "steps": "循环 get_action/step 至终止，记录最终夹爪-目标距离",
       "expected": "最终距离 ≤ 0.05 m",
       "status": "NG",
-      "actual": "100 步结束，最终夹爪-目标距离 0.18612 m（阈值 0.05），得分 9.25",
-      "seconds": 0.153
+      "actual": "100 步结束，最终夹爪-目标距离 0.12462 m（阈值 0.05），得分 50.25",
+      "seconds": 0.113
     },
     {
       "id": "TC-ALG-043",
@@ -599,8 +599,8 @@
       "steps": "跑完整回合并记录最终距离",
       "expected": "最终距离 ≤ 0.05 m",
       "status": "NG",
-      "actual": "100 步结束，最终距离 0.18612 m，得分 9.25",
-      "seconds": 0.156
+      "actual": "100 步结束，最终距离 0.12462 m，得分 50.25",
+      "seconds": 0.113
     },
     {
       "id": "TC-ALG-044",
@@ -613,8 +613,8 @@
       "steps": "跑完整回合并记录最终距离",
       "expected": "最终距离 ≤ 0.05 m",
       "status": "NG",
-      "actual": "100 步结束，最终距离 0.18612 m，得分 9.25",
-      "seconds": 0.139
+      "actual": "100 步结束，最终距离 0.12462 m，得分 50.25",
+      "seconds": 0.115
     },
     {
       "id": "TC-ALG-045",
@@ -627,8 +627,8 @@
       "steps": "跑完整回合并记录最终距离",
       "expected": "最终距离 ≤ 0.05 m",
       "status": "NG",
-      "actual": "100 步结束，最终距离 0.18612 m，得分 9.25",
-      "seconds": 0.138
+      "actual": "100 步结束，最终距离 0.12462 m，得分 50.25",
+      "seconds": 0.115
     },
     {
       "id": "TC-ALG-046",
@@ -641,8 +641,8 @@
       "steps": "跑完整回合并记录最终距离",
       "expected": "最终距离 ≤ 0.05 m",
       "status": "NG",
-      "actual": "100 步结束，最终距离 0.18612 m，得分 9.25",
-      "seconds": 0.156
+      "actual": "100 步结束，最终距离 0.12462 m，得分 50.25",
+      "seconds": 0.115
     },
     {
       "id": "TC-ALG-047",
@@ -655,8 +655,8 @@
       "steps": "跑完整回合并记录最终距离与得分",
       "expected": "最终距离 ≤ 0.05 m",
       "status": "NG",
-      "actual": "低年级组：100 步结束，最终距离 0.18612 m，得分 9.25",
-      "seconds": 0.158
+      "actual": "低年级组：100 步结束，最终距离 0.12462 m，得分 50.25",
+      "seconds": 0.113
     },
     {
       "id": "TC-ALG-048",
@@ -669,8 +669,8 @@
       "steps": "逐回合执行并统计最终距离 ≤0.05 的比例",
       "expected": "成功率 ≥ 80%",
       "status": "NG",
-      "actual": "10 个随机回合成功率 0%，最终距离均值 0.18612 m（要求 ≥80%）",
-      "seconds": 1.437
+      "actual": "10 个随机回合成功率 0%，最终距离均值 0.12462 m（要求 ≥80%）",
+      "seconds": 1.154
     },
     {
       "id": "TC-ALG-049",
@@ -684,7 +684,7 @@
       "expected": "步数 ≤ 100",
       "status": "OK",
       "actual": "实际执行 100 步（上限 100）",
-      "seconds": 0.144
+      "seconds": 0.119
     },
     {
       "id": "TC-ALG-050",
@@ -698,14 +698,14 @@
       "expected": "回合在 100 步内正常终止",
       "status": "OK",
       "actual": "terminated=True，执行 100 步",
-      "seconds": 0.141
+      "seconds": 0.115
     }
   ],
   "summary": {
     "OK": 39,
     "POK": 0,
-    "NG": 11,
-    "NT": 0
+    "NG": 10,
+    "NT": 1
   },
   "total": 50
 }

@@ -24,8 +24,7 @@ sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8', errors='repla
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 ROOT = os.path.dirname(HERE)
-TEMPLATE = (r'E:\yanjiusheng\suance course\实践作业-文档模板2026'
-            r'\附录1：测试用例清单模板.xlsx')
+TEMPLATE = os.path.join(HERE, '附录1：测试用例清单模板.xlsx')
 OUTPUT = os.path.join(ROOT, '附录1：测试用例清单.xlsx')
 RESULTS = os.path.join(HERE, 'results.json')
 
