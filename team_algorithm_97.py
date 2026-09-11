@@ -5,7 +5,7 @@ from dataclasses import dataclass
 from typing import List, Literal, Tuple, Dict, Any, Optional, Set
 from numpy.typing import NDArray
 
-DESIRE = 50
+DESIRE = 101
 
 # from pprint import pprint
 
@@ -169,40 +169,39 @@ def turnZ(Rz: float) -> RMat:
     )
 
 
-# def forward_kinematics(
-#     robot: Robot, joint_angles: NDArray[np.float64], i: int, link: bool = True
-# ) -> Tuple[PMat, RMat]:
-#     """
-#     根据URDF文件和关节角度计算关节和连接的位置
-#     """
-#     P: PMat = np.zeros(3)
-#     R: RMat = np.eye(3)
-#     link = robot.links[i].origin
-#     if link:
-#         P = P @ turnX(link.rpy[0]) @ turnY(link.rpy[1]) @ turnZ(link.rpy[2])
-#         R = R @ turnX(link.rpy[0]) @ turnY(link.rpy[1]) @ turnZ(link.rpy[2])
-#         P = P + link.xyz
-#     for j in range(i, -1, -1):
-#         joint = robot.joints[j].origin
-#         ang = joint_angles[j]
-#         P = P @ turnZ(ang)
-#         R = R @ turnZ(ang)
-#         P = P @ turnX(joint.rpy[0]) @ turnY(joint.rpy[1]) @ turnZ(joint.rpy[2])
-#         R = R @ turnX(joint.rpy[0]) @ turnY(joint.rpy[1]) @ turnZ(joint.rpy[2])
-#         P = P + joint.xyz
-#     P = P @ turnZ(np.pi)
-#     R = R @ turnZ(np.pi)
-#     # print(f"Test {i+1}")
-#     # print(P)
-#     # print(R)
-#     return (P, R)
+def forward_kinematics(
+    robot: Robot, joint_angles: NDArray[np.float64], i: int
+) -> Tuple[PMat, RMat]:
+    """
+    根据URDF文件和关节角度计算末端执行器的位置
+    """
+    P: PMat = np.zeros(3)
+    R: RMat = np.eye(3)
+    link = robot.links[i].origin
+    P = P @ turnX(link.rpy[0]) @ turnY(link.rpy[1]) @ turnZ(link.rpy[2])
+    R = R @ turnX(link.rpy[0]) @ turnY(link.rpy[1]) @ turnZ(link.rpy[2])
+    P = P + link.xyz
+    for j in range(i, -1, -1):
+        joint = robot.joints[j].origin
+        ang = joint_angles[j]
+        P = P @ turnZ(ang)
+        R = R @ turnZ(ang)
+        P = P @ turnX(joint.rpy[0]) @ turnY(joint.rpy[1]) @ turnZ(joint.rpy[2])
+        R = R @ turnX(joint.rpy[0]) @ turnY(joint.rpy[1]) @ turnZ(joint.rpy[2])
+        P = P + joint.xyz
+    P = P @ turnZ(np.pi)
+    R = R @ turnZ(np.pi)
+    # print(f"Test {i+1}")
+    # print(P)
+    # print(R)
+    return (P, R)
 
 
 def forward_kinematics_mat(
     robot: Robot, joint_angles: NDArray[np.float64], i: int
 ) -> List[Tuple[PMat, RMat, PMat, RMat]]:
     """
-    根据URDF文件和关节角度计算关节和连接的位置
+    根据URDF文件和关节角度计算末端执行器的位置
     """
     ret: List[Tuple[PMat, RMat, PMat, RMat]] = []
     P: PMat = np.zeros(3)
@@ -218,7 +217,7 @@ def forward_kinematics_mat(
         link = robot.links[j].origin
         P0 = P + link.xyz @ R
         R0 = turnX(link.rpy[0]) @ turnY(link.rpy[1]) @ turnZ(link.rpy[2]) @ R
-        # print(f"Test {j+1}")
+        # print(f"Fast {j+1}")
         # print(P)
         # print(R)
         # print(P0)
@@ -281,7 +280,7 @@ class MyCustomAlgorithm(BaseAlgorithm):
             self.A5 = -90
             self.strategies.add("A1Right")
         elif bdb > 15:
-            self.A5 = -120
+            self.A5 = -110
             self.strategies.add("A1Right")
         elif bdb > 8:
             self.A4 = 0
@@ -291,18 +290,8 @@ class MyCustomAlgorithm(BaseAlgorithm):
             self.A4 = -5
             self.A5 = -140
             self.strategies.add("A1Right")
-        elif bdb > 3:
-            if bda > -0.28:
-                self.A4 = +40
-                self.A5 = 0  # !
-                self.strategies.add("A1Left")
-            else:
-                self.A4 = +15
-                self.A5 = -20
-                self.strategies.add("A1Left")
         elif bdb > -5:
-            self.A4 = +15
-            self.A5 = -20
+            self.A5 = -10
             self.strategies.add("A1Left")
         elif bdb > -15:
             self.A5 = -20
@@ -313,7 +302,6 @@ class MyCustomAlgorithm(BaseAlgorithm):
         else:
             self.A5 = -90
             self.strategies.add("A1Left")
-        self.strategies.add("A2Up")
         self.strategies.add("A3Up")
         self.strategies.add("A4Up")
         print(A([bda, bdb, bdc]), A([self.A4, self.A5, self.A6]), self.strategies)
@@ -356,8 +344,6 @@ class MyCustomAlgorithm(BaseAlgorithm):
                             v[j] += -1
                         if ord("0") in keys and keys[ord("0")] & env.p.KEY_IS_DOWN:
                             v[j] += 1
-                if ord("8") in keys and keys[ord("8")] & env.p.KEY_IS_DOWN:
-                    print(A(v))
                 self.A4, self.A5, self.A6 = v
 
             A4 = self.A4
@@ -451,22 +437,16 @@ class MyCustomAlgorithm(BaseAlgorithm):
                 if abs(Aa1) < 90 - self.step:
                     a1 = -180
                     pass
-            if "A2Up" in self.strategies:
-                aa2 = angles[1]
-                Aa2 = aa2 - a2
-                if abs(Aa2) < 85 - self.step:
-                    a2 = 90
-                    pass
             if "A3Up" in self.strategies:
                 aa3 = angles[2]
                 Aa3 = aa3 - a3
-                if abs(Aa3) < 85 - self.step:
+                if abs(Aa3) < 90 - self.step:
                     a3 = 180
                     pass
             if "A4Up" in self.strategies:
                 aa4 = angles[3]
                 Aa4 = aa4 - a4
-                if abs(Aa4) < 85 - self.step:
+                if abs(Aa4) < 90 - self.step:
                     a4 = 180
                     pass
             # a1=0.0

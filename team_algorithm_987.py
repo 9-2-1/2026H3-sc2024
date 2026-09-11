@@ -5,7 +5,7 @@ from dataclasses import dataclass
 from typing import List, Literal, Tuple, Dict, Any, Optional, Set
 from numpy.typing import NDArray
 
-DESIRE = 50
+DESIRE = 101
 
 # from pprint import pprint
 

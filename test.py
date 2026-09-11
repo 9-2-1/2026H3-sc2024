@@ -1,8 +1,12 @@
 from env import Env
-from team_algorithm import PPOAlgorithm, MyCustomAlgorithm
+from team_algorithm import MyCustomAlgorithm
+from time import sleep
+
 
 def main(algorithm):
-    env = Env(is_senior=True,seed=100,gui=False)
+    env = Env(is_senior=True, seed=100, gui=True)
+    for i in range(0):
+        env.reset()
     done = False
     num_episodes = 100
     final_score = 0
@@ -15,12 +19,15 @@ def main(algorithm):
 
         while not done:
             observation = env.get_observation()
-            action = algorithm.get_action(observation)
+            action = algorithm.get_action(observation, env)
+            # env.debugdoor()
             obs = env.step(action)
             score += env.success_reward
+            # sleep(0.1)
 
             # Check if the episode has ended
             done = env.terminated
+            # done = False
 
         total_steps += env.step_num
         total_distance += env.get_dis()

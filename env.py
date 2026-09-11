@@ -6,6 +6,10 @@ import math
 from pybullet_utils import bullet_client
 from scipy.spatial.transform import Rotation as R
 
+DEBUG = False
+PANIC = False
+
+
 class Env:
     def __init__(self,is_senior,seed, gui=False):
         self.seed = seed
@@ -62,10 +66,11 @@ class Env:
     def step(self, action):
         if self.terminated:
             return self.reset_episode()
-        
+
         self.step_num += 1
         joint_angles = [self.p.getJointState(self.fr5, i)[0] for i in range(1, 7)]
-        action = np.clip(action, -1, 1)
+        if not DEBUG:
+            action = np.clip(action, -1, 1)
         fr5_joint_angles = np.array(joint_angles) + (np.array(action[:6]) / 180 * np.pi)
         gripper = np.array([0, 0])
         angle_now = np.hstack([fr5_joint_angles, gripper])
@@ -94,6 +99,9 @@ class Env:
         for contact_point in table_contact_points or obstacle1_contact_points:
             link_index = contact_point[3]
             if link_index not in [0, 1]:
+                if not self.obstacle_contact:
+                    if PANIC:
+                        input("obstacle_contact Enter:")
                 self.obstacle_contact = True
 
         # 计算奖励
@@ -105,8 +113,9 @@ class Env:
                 elif not self.is_senior:
                     self.success_reward = 50
                 else:
-                    return 
-            self.terminated = True
+                    return
+            if not DEBUG:
+                self.terminated = True
 
         elif self.step_num >= self.max_steps:
             distance = self.get_dis()
@@ -119,9 +128,39 @@ class Env:
                     self.success_reward *= 0.2 
                 elif not self.is_senior:
                     self.success_reward *= 0.5
-                    
-            self.terminated = True
 
+            if not DEBUG:
+                self.terminated = True
+
+    def debugdoor(self):
+        # for i in range(7):
+        #     print(f"Joint {i}")
+        #     print(self.p.getJointState(self.fr5, i))
+        for i in range(1, 8):
+            print(f"Link {i}")
+            print(np.array(self.p.getLinkState(self.fr5, i)[0]))
+            x, y, z, w = self.p.getLinkState(self.fr5, i)[1]
+            print(
+                np.array(
+                    [
+                        [
+                            1 - 2 * y**2 - 2 * z**2,
+                            2 * x * y - 2 * w * z,
+                            2 * x * z + 2 * w * y,
+                        ],
+                        [
+                            2 * x * y + 2 * w * z,
+                            1 - 2 * x**2 - 2 * z**2,
+                            2 * y * z - 2 * w * x,
+                        ],
+                        [
+                            2 * x * z - 2 * w * y,
+                            2 * y * z + 2 * w * x,
+                            1 - 2 * x**2 - 2 * y**2,
+                        ],
+                    ]
+                ).T
+            )
 
     def reset_episode(self):
         self.reset()
