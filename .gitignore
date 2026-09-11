@@ -13,3 +13,6 @@ venv/
 *.un~
 *~
 *.swp
+
+# VSCode 工作区配置（含本机绝对路径，不入库）
+.vscode/
