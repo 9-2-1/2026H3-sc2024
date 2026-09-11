@@ -5,7 +5,7 @@ from dataclasses import dataclass
 from typing import List, Literal, Tuple, Dict, Any, Optional, Set
 from numpy.typing import NDArray
 
-DESIRE = 50
+DESIRE = 60
 
 # from pprint import pprint
 
@@ -244,14 +244,15 @@ class BaseAlgorithm(ABC):
 
 
 class MyCustomAlgorithm(BaseAlgorithm):
-    def __init__(self) -> None:
+    def __init__(self, A4:Optional[float]=None, A5:Optional[float]=None, A6:Optional[float]=None) -> None:
         # 自定义初始化
         self.target: Optional[NDArray[np.float64]] = None
         self.xyz_target: Optional[NDArray[np.float64]] = None
-        self.A4 = 0
-        self.A5 = 0
-        self.A6 = 0
-        self.Muli = 0
+        self.A4 = 0.0
+        self.A5 = 0.0
+        self.A6 = 0.0
+        self.DFL = {"A4": A4, "A5": A5, "A6": A6}
+        self.Muli = 0.0
         self.strategies: Set[str] = set()
         self.design_target = np.zeros(3)
         self.ball_target = np.zeros(3)
@@ -279,47 +280,48 @@ class MyCustomAlgorithm(BaseAlgorithm):
         self.strategies.clear()
         if bdb > 25:
             self.A5 = -90
-            self.strategies.add("A1Right")
         elif bdb > 15:
             self.A5 = -120
-            self.strategies.add("A1Right")
         elif bdb > 8:
             self.A4 = 0
             self.A5 = -130
-            self.strategies.add("A1Right")
         elif bdb > 6:
             self.A4 = -5
             self.A5 = -140
-            self.strategies.add("A1Right")
         elif bdb > 3:
             if bda > -0.28:
                 self.A4 = +40
                 self.A5 = 0  # !
-                self.strategies.add("A1Left")
             else:
                 self.A4 = +15
                 self.A5 = -20
-                self.strategies.add("A1Left")
         elif bdb > -5:
             self.A4 = +15
             self.A5 = -20
-            self.strategies.add("A1Left")
         elif bdb > -15:
             self.A5 = -20
-            self.strategies.add("A1Left")
         elif bdb > -25:
             self.A5 = -50
-            self.strategies.add("A1Left")
         else:
             self.A5 = -90
+        if self.A5 > -90:
             self.strategies.add("A1Left")
+        if self.A5 < -90:
+            self.strategies.add("A1Right")
         self.strategies.add("A2Up")
         self.strategies.add("A3Up")
         self.strategies.add("A4Up")
+        print(dr, br)
+        if self.DFL["A4"] is not None:
+            self.A4 = self.DFL["A4"]
+        if self.DFL["A5"] is not None:
+            self.A5 = self.DFL["A5"]
+        if self.DFL["A6"] is not None:
+            self.A6 = self.DFL["A6"]
         print(A([bda, bdb, bdc]), A([self.A4, self.A5, self.A6]), self.strategies)
 
     def get_action(
-        self, observation: NDArray[np.float64], env: Any = None
+            self, observation: NDArray[np.float64], env: Any = None, fast: bool = False
     ) -> NDArray[np.float64]:
         # 输入观测值，返回动作
         args = observation[0][:6]
@@ -385,6 +387,8 @@ class MyCustomAlgorithm(BaseAlgorithm):
             p4z = pez - p4ez
 
             pec = np.sqrt(pex**2 + pey**2)
+            if pec < p4ey:
+                pec = p4ey
             p4l = np.sqrt(pec**2 - p4ey**2) + p4ex
             p4a = (
                 180
@@ -437,38 +441,44 @@ class MyCustomAlgorithm(BaseAlgorithm):
             a5 = (a5 + 180) % 360 - 180
             a6 = (a6 + 180) % 360 - 180
 
-            if "A1Left" in self.strategies:
-                aa1 = angles[0]
-                Aa1 = aa1 - a1
-                # print("A1left", aa1, a1, Aa1, self.step)
-                if abs(Aa1) < 90 - self.step:
-                    # print("A1left yes")
-                    a1 = +180
-                    pass
-            if "A1Right" in self.strategies:
-                aa1 = angles[0]
-                Aa1 = aa1 - a1
-                if abs(Aa1) < 90 - self.step:
-                    a1 = -180
-                    pass
-            if "A2Up" in self.strategies:
-                aa2 = angles[1]
-                Aa2 = aa2 - a2
-                if abs(Aa2) < 85 - self.step:
-                    a2 = 90
-                    pass
-            if "A3Up" in self.strategies:
-                aa3 = angles[2]
-                Aa3 = aa3 - a3
-                if abs(Aa3) < 85 - self.step:
-                    a3 = 180
-                    pass
-            if "A4Up" in self.strategies:
-                aa4 = angles[3]
-                Aa4 = aa4 - a4
-                if abs(Aa4) < 85 - self.step:
-                    a4 = 180
-                    pass
+            ptarget = A([a1, a2, a3, a4, a5, a6])
+            pdiff = ptarget - self.base_angles
+            if np.max(np.abs(pdiff)) >= 100.0:
+                return None
+
+            if not fast:
+                if "A1Left" in self.strategies:
+                    aa1 = angles[0]
+                    Aa1 = aa1 - a1
+                    # print("A1left", aa1, a1, Aa1, self.step)
+                    if abs(Aa1) < 80 - self.step:
+                        # print("A1left yes")
+                        a1 = +180
+                        pass
+                if "A1Right" in self.strategies:
+                    aa1 = angles[0]
+                    Aa1 = aa1 - a1
+                    if abs(Aa1) < 80 - self.step:
+                        a1 = -180
+                        pass
+                if "A2Up" in self.strategies:
+                    aa2 = angles[1]
+                    Aa2 = aa2 - a2
+                    if abs(Aa2) < 80 - self.step:
+                        a2 = 90
+                        pass
+                if "A3Up" in self.strategies:
+                    aa3 = angles[2]
+                    Aa3 = aa3 - a3
+                    if abs(Aa3) < 80 - self.step:
+                        a3 = 180
+                        pass
+                if "A4Up" in self.strategies:
+                    aa4 = angles[3]
+                    Aa4 = aa4 - a4
+                    if abs(Aa4) < 80 - self.step:
+                        a4 = 180
+                        pass
             # a1=0.0
             # a2=0.0
             # a3=0.0
