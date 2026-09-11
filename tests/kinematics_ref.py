@@ -41,6 +41,11 @@ BASE_RPY = (0.0, 0.0, math.pi)   # env.py:30 baseOrientation
 # env.py:142 中夹爪中心相对 link7 的固定偏移
 GRIPPER_OFFSET = np.array([0.0, 0.0, 0.15])
 
+# fr5v6.urdf 中 j6_Link 的 <inertial><origin> xyz（关节帧 -> 质心的偏置）。
+# env.py:141 的 getLinkState(fr5, 6)[0] 返回质心，本模块的 forward_kinematics
+# 推出的是关节帧，两者相差这个常数。
+LINK6_INERTIAL_XYZ = np.array([7.7496e-05, 1.7751e-05, 0.076122])
+
 # env.py:61-70 reset() 设置的初始关节角（度）
 NEUTRAL_DEG = np.array([-49.45849125928217, -57.601209583849, -138.394013961943,
                         -164.0052115563118, -49.45849125928217, 0.0])
@@ -86,12 +91,18 @@ def gripper_centre(joint_angles_deg) -> np.ndarray:
 
     env 用 getLinkState(fr5, 6)[0] 取位置、getLinkState(fr5, 7)[1] 取姿态，
     即本模块 forward_kinematics 的第 6 项（索引 5）与第 7 项（索引 6）。
+
+    注意 PyBullet 的 getLinkState(id, i)[0] 返回的是该连杆的**质心**
+    （linkWorldPosition），[4] 才是关节帧位置（worldLinkFramePosition）。
+    本模块 forward_kinematics 推出的是关节帧，故须再叠加 j6_Link 的
+    <inertial><origin> 偏置才与 env 对齐——否则夹爪中心会恒定偏 0.076122 m。
     """
     rad = np.asarray(joint_angles_deg, dtype=float) * math.pi / 180.0
     mats = forward_kinematics(rad)
-    link6_pos = mats[5][0]
+    link6_frame_pos, link6_frame_rot = mats[5]
+    link6_com_pos = link6_frame_pos + link6_frame_rot @ LINK6_INERTIAL_XYZ
     link7_rot = mats[6][1]
-    return link6_pos + link7_rot @ GRIPPER_OFFSET
+    return link6_com_pos + link7_rot @ GRIPPER_OFFSET
 
 
 def clamp_to_limits(joint_angles_rad) -> np.ndarray:
