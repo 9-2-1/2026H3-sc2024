@@ -1,0 +1,15 @@
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+.pytest_cache/
+
+# Excel 打开文件时生成的锁文件
+~$*.xlsx
+~$*.docx
+
+# 编辑器备份/临时文件
+*.un~
+*~
+*.swp
