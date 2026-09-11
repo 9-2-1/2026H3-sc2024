@@ -2,8 +2,8 @@
 """一键执行器：调用 pytest 跑完全部用例，再按交付模块打印汇总。
 
 用法（仓库根目录）：
-    python tests/run_cases.py              # 跑全部 50 条
-    python tests/run_cases.py -m module1   # 只跑模块一（30 条）
+    python tests/run_cases.py              # 跑全部 54 条
+    python tests/run_cases.py -m module1   # 只跑模块一（34 条）
     python tests/run_cases.py -m module2   # 只跑模块二（20 条）
     python tests/run_cases.py -k TC-ALG-042  # 只跑某一条
     python tests/run_cases.py -x           # 任意 pytest 参数原样透传

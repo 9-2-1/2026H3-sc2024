@@ -6,7 +6,7 @@
     OK  测试通过 / POK 部分通过 / NG 不通过 / NT 用例无法执行
 
 用例按交付要求分为两组，见文件末尾的 MODULE1_IDS：
-    模块一（测试基础实践）  30 条，人工一眼可判的黑盒行为用例
+    模块一（测试基础实践）  34 条，人工一眼可判的黑盒行为用例
     模块二（AI 融合实践）   20 条，需运动学/白盒知识的进阶用例，作为 AI 生成清单
 
 被测模块：team_algorithm.py 的 MyCustomAlgorithm 及其运动学辅助函数
@@ -641,6 +641,81 @@ def c050():
         f'terminated={env.terminated}，执行 {steps} 步'
 
 
+def c051():
+    """数值健壮性：目标贴近基座竖直轴线时，逆解仍应给出有限动作。"""
+    probes = [
+        ([0.0, 0.85, 0.2], '常规目标'),
+        ([0.10, 0.10, 0.2], '近轴 pec=0.141'),
+        ([0.05, 0.05, 0.3], '近轴 pec=0.071'),
+        ([0.00, 0.02, 0.3], '近轴 pec=0.020'),
+    ]
+    bad = []
+    for tgt, desc in probes:
+        act = _quiet(MyCustomAlgorithm().get_action,
+                     make_obs(NEUTRAL, tgt, [0.1, 0.6, 0.2]), None)
+        if act is None:
+            bad.append(f'{desc}{tgt} → 返回 None')
+        elif not np.all(np.isfinite(np.asarray(act, dtype=float))):
+            bad.append(f'{desc}{tgt} → {np.round(np.asarray(act, dtype=float), 3).tolist()}')
+    if bad:
+        return 'NG', '目标贴近基座轴线时产生非有限动作：' + '；'.join(bad)
+    return 'OK', f'{len(probes)} 组目标（含 3 组近轴）均返回有限动作'
+
+
+def c052():
+    """接口契约：动作量级应落在基类声明的 [-1,1] 区间内。"""
+    probes = [
+        ([0.0, 0.85, 0.2], '典型目标'),
+        ([0.2, 0.9, 0.3], '分布右上角'),
+        ([-0.2, 0.8, 0.1], '分布左端'),
+    ]
+    worst, sample = 0.0, None
+    for tgt, _desc in probes:
+        act = _quiet(MyCustomAlgorithm().get_action,
+                     make_obs(NEUTRAL, tgt, [0.1, 0.6, 0.2]), None)
+        if act is None:
+            continue
+        act = np.asarray(act, dtype=float)
+        m = float(np.max(np.abs(act)))
+        if m > worst:
+            worst, sample = m, np.round(act, 3).tolist()
+    ok = worst <= 1.0 + 1e-9
+    return ('OK' if ok else 'NG'), (
+        f'最大动作绝对值 {worst:.3f}（契约上限 1.0，env.py:122-123 据此裁剪）；'
+        f'最差样本 action={sample}')
+
+
+def c053():
+    """策略可实施性：相邻两步下达的目标关节角不应出现大幅跳变。"""
+    env = fresh_env(seed=1000, target=[0.0, 0.85, 0.2], obstacle=[0.0, 0.6, 0.2])
+    alg = MyCustomAlgorithm()
+    log = []
+    with contextlib.redirect_stdout(_SINK):
+        while not env.terminated and env.step_num < 100:
+            act = alg.get_action(env.get_observation(), env)
+            if act is None:
+                break
+            log.append(np.array(alg.target, dtype=float))
+            env.step(act)
+    if len(log) < 2:
+        return 'NT', f'回合仅执行 {len(log)} 步，无法比较相邻步跳变'
+    jump = float(np.max(np.abs(np.diff(np.asarray(log), axis=0))))
+    ok = jump <= 30.0
+    return ('OK' if ok else 'NG'), (
+        f'相邻步目标角最大跳变 {jump:.1f}°（上限 30°），共 {len(log)} 步')
+
+
+def c054():
+    """端到端余量：最终夹爪-目标距离应留出余量，而非贴着成功阈值。"""
+    env = fresh_env(seed=1000, target=[0.0, 0.85, 0.2], obstacle=[0.0, 0.6, 0.2])
+    alg = MyCustomAlgorithm()
+    with contextlib.redirect_stdout(_SINK):
+        steps, dist, score, omin = run_episode(alg, env)
+    ok = dist <= 0.04
+    return ('OK' if ok else 'NG'), (
+        f'{steps} 步结束，最终距离 {dist:.5f} m（余量要求 ≤0.04，成功阈值 0.05），得分 {score:.2f}')
+
+
 CASES = [
     dict(id='TC-ALG-001', item='输入解析', title='中立位观测下正常返回六轴动作', level='高',
          pre='模块已实例化，观测为 (1,12) 标准格式', method='等价类划分（有效等价类）',
@@ -892,6 +967,28 @@ CASES = [
          inp='随机种子 1000 的回合',
          steps='跑完整回合并检查 env.terminated',
          exp='回合在 100 步内正常终止', check=c050),
+
+    # ---------------- 数值健壮性 / 接口契约 / 策略可实施性（补充 4 条）----------------
+    dict(id='TC-ALG-051', item='逆解健壮性', title='目标贴近基座轴线时仍返回有限动作', level='高',
+         pre='目标水平投影距离小于连杆偏置，开方项可能为负', method='边界值分析（工作空间内边界）',
+         inp='目标 (0.10,0.10,0.2)、(0.05,0.05,0.3)、(0.00,0.02,0.3)，对照常规目标 (0,0.85,0.2)',
+         steps='分别以中立位为起始观测调用 get_action()，检查 action 是否全为有限值',
+         exp='动作 6 个分量均为有限数值，不含 NaN/Inf', check=c051),
+    dict(id='TC-ALG-052', item='动作输出', title='动作量级不超出 [-1,1] 接口契约', level='高',
+         pre='基类注释声明 action 范围 [-1,1]，env 按此裁剪', method='边界值分析（契约上限）',
+         inp='目标 (0,0.85,0.2)、(0.2,0.9,0.3)、(-0.2,0.8,0.1)',
+         steps='调用 get_action() 并统计 action 的绝对值最大值',
+         exp='max|action| ≤ 1.0', check=c052),
+    dict(id='TC-ALG-053', item='避障策略', title='相邻步下达的目标关节角不出现大幅跳变', level='高',
+         pre='策略每步重新解算目标角，跳变过大会使机械臂无法跟踪', method='场景法（策略可实施性）',
+         inp='目标 (0,0.85,0.2)，障碍 (0,0.6,0.2)，逐记录每步下达的 self.target',
+         steps='跑完整回合，计算相邻两步目标角之差的绝对值最大值',
+         exp='相邻步跳变 ≤ 30°', check=c053),
+    dict(id='TC-ALG-054', item='端到端场景', title='抓取收敛后应留有余量而非贴着阈值', level='中',
+         pre='成功阈值为 0.05 m，最终距离应显著小于该阈值', method='边界值分析（余量下界）',
+         inp='目标 (0,0.85,0.2)，障碍 (0,0.6,0.2)',
+         steps='跑完整回合并记录最终夹爪-目标距离',
+         exp='最终距离 ≤ 0.04 m（预留 ≥20% 余量）', check=c054),
 ]
 
 
@@ -927,9 +1024,11 @@ MODULE1_IDS = (
     'TC-ALG-033', 'TC-ALG-034',
     # 异常安全与动作输出（2 条）
     'TC-ALG-039', 'TC-ALG-040',
-    # 端到端抓取：看"抓没抓到"即可，最直观（9 条）
+    # 端到端抓取：看"抓没抓到"即可，最直观（10 条）
     'TC-ALG-042', 'TC-ALG-043', 'TC-ALG-044', 'TC-ALG-045', 'TC-ALG-046',
-    'TC-ALG-047', 'TC-ALG-048', 'TC-ALG-049', 'TC-ALG-050',
+    'TC-ALG-047', 'TC-ALG-048', 'TC-ALG-049', 'TC-ALG-050', 'TC-ALG-054',
+    # 数值健壮性与策略可实施性：仍是只看行为即可判的真/假（3 条）
+    'TC-ALG-051', 'TC-ALG-052', 'TC-ALG-053',
 )
 
 MODULE1_SET = frozenset(MODULE1_IDS)

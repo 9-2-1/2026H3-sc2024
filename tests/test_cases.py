@@ -1,11 +1,11 @@
 # -*- coding: utf-8 -*-
-"""pytest 用例入口：把 cases_spec.CASES 参数化成 50 个独立测试项。
+"""pytest 用例入口：把 cases_spec.CASES 参数化成 54 个独立测试项。
 
 一条用例 = 一个测试项，可按编号 / 标题 / 交付模块筛选：
-    pytest                                  # 跑完全部 50 条
+    pytest                                  # 跑完全部 54 条
     pytest -k TC-ALG-042                    # 只跑某一条
     pytest -k 端到端                         # 按标题关键字筛选
-    pytest -m module1                       # 只跑模块一（30 条）
+    pytest -m module1                       # 只跑模块一（34 条）
     pytest -m module2                       # 只跑模块二（20 条）
 
 判定映射见 conftest.py：断言通过 = OK/POK，断言失败 = NG，用例抛异常 = NT。
