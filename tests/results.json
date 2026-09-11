@@ -13,7 +13,7 @@
       "expected": "返回形状 (6,) 的有限实数数组",
       "status": "OK",
       "actual": "action=[100.0, 100.0, 100.0, 100.0, 29.4585, 0.0] shape=(6,)",
-      "seconds": 0.005
+      "seconds": 0.001
     },
     {
       "id": "TC-ALG-002",
@@ -28,7 +28,7 @@
       "expected": "0→-180°，1→+180°",
       "status": "OK",
       "actual": "归一化下界=0.0 上界=1.0；反解下界=-180.0°；返回类型 lo=ndarray hi=ndarray",
-      "seconds": 0.003
+      "seconds": 0.002
     },
     {
       "id": "TC-ALG-003",
@@ -73,7 +73,7 @@
       "expected": "正常返回动作，不抛异常",
       "status": "OK",
       "actual": "双参数调用成功，返回 ndarray",
-      "seconds": 0.036
+      "seconds": 0.016
     },
     {
       "id": "TC-ALG-006",
@@ -88,7 +88,7 @@
       "expected": "键盘事件被读取且不影响正常输出",
       "status": "OK",
       "actual": "getKeyboardEvents 调用 1 次，动作返回 ndarray",
-      "seconds": 0.002
+      "seconds": 0.001
     },
     {
       "id": "TC-ALG-007",
@@ -193,7 +193,7 @@
       "expected": "最大偏差 < 1e-6 m",
       "status": "OK",
       "actual": "30 组随机位姿最大位置偏差 0.00e+00 m（阈值 1e-6）",
-      "seconds": 0.013
+      "seconds": 0.011
     },
     {
       "id": "TC-ALG-014",
@@ -223,7 +223,7 @@
       "expected": "同点返回 0，异点返回正值",
       "status": "OK",
       "actual": "同点距离=0.00e+00，异点距离=0.06970",
-      "seconds": 0.001
+      "seconds": 0.002
     },
     {
       "id": "TC-ALG-016",
@@ -238,7 +238,7 @@
       "expected": "偏差 ≤ 0.05 m（抓取成功阈值）",
       "status": "OK",
       "actual": "与 env.get_dis() 夹爪中心最大偏差 0.00000 m（成功阈值 0.05 m）",
-      "seconds": 0.002
+      "seconds": 0.001
     },
     {
       "id": "TC-ALG-017",
@@ -253,7 +253,7 @@
       "expected": "模型内偏差 ≤ 0.05 m",
       "status": "OK",
       "actual": "回合结束后，按模块自身 FK 计算 self.target 处夹爪中心距目标 0.04850 m（Muli=0.04850，阈值 0.05 m）",
-      "seconds": 0.109
+      "seconds": 0.093
     },
     {
       "id": "TC-ALG-018",
@@ -298,7 +298,7 @@
       "expected": "A4=10, A5=-90",
       "status": "OK",
       "actual": "请求bdb=40.0° 实测bdb=40.0000000000° bda=-0.1500 -> A4=10.0 A5=-90.0",
-      "seconds": 0.002
+      "seconds": 0.001
     },
     {
       "id": "TC-ALG-021",
@@ -328,7 +328,7 @@
       "expected": "25 不满足 >25，落入 15<bdb<=25 档：A5=-120",
       "status": "OK",
       "actual": "请求bdb=25.0° 实测bdb=25.0000000000° bda=-0.1500 -> A4=10.0 A5=-120.0",
-      "seconds": 0.002
+      "seconds": 0.001
     },
     {
       "id": "TC-ALG-023",
@@ -343,7 +343,7 @@
       "expected": "15 不满足 >15，落入 8<bdb<=15 档：A4=0, A5=-130",
       "status": "OK",
       "actual": "请求bdb=15.0° 实测bdb=15.0000000000° bda=-0.1500 -> A4=0.0 A5=-130.0",
-      "seconds": 0.003
+      "seconds": 0.001
     },
     {
       "id": "TC-ALG-024",
@@ -358,7 +358,7 @@
       "expected": "A4=0, A5=-130",
       "status": "OK",
       "actual": "请求bdb=10.0° 实测bdb=10.0000000000° bda=-0.1500 -> A4=0.0 A5=-130.0",
-      "seconds": 0.002
+      "seconds": 0.001
     },
     {
       "id": "TC-ALG-025",
@@ -373,7 +373,7 @@
       "expected": "8 不满足 >8，落入 6<bdb<=8 档：A4=-5, A5=-140",
       "status": "OK",
       "actual": "请求bdb=8.0° 实测bdb=8.0000000000° bda=-0.1500 -> A4=-5.0 A5=-140.0",
-      "seconds": 0.002
+      "seconds": 0.001
     },
     {
       "id": "TC-ALG-026",
@@ -403,7 +403,7 @@
       "expected": "A4=40, A5=0（抬肘从障碍上方越过）",
       "status": "OK",
       "actual": "请求bdb=5.0° 实测bdb=5.0000000000° bda=-0.1500 -> A4=40.0 A5=0.0",
-      "seconds": 0.002
+      "seconds": 0.001
     },
     {
       "id": "TC-ALG-028",
@@ -433,7 +433,7 @@
       "expected": "3 不满足 >3，落入 -5<bdb<=3 档：A4=15, A5=-20",
       "status": "OK",
       "actual": "请求bdb=3.0° 实测bdb=3.0000000000° bda=-0.1500 -> A4=40.0 A5=0.0",
-      "seconds": 0.002
+      "seconds": 0.001
     },
     {
       "id": "TC-ALG-030",
@@ -463,7 +463,7 @@
       "expected": "-15 不满足 >-15，落入 -25<bdb<=-15 档：A4=10, A5=-50",
       "status": "OK",
       "actual": "请求bdb=-15.0° 实测bdb=-15.0000000000° bda=-0.1500 -> A4=10.0 A5=-20.0",
-      "seconds": 0.002
+      "seconds": 0.001
     },
     {
       "id": "TC-ALG-032",
@@ -493,7 +493,7 @@
       "expected": "strategies 含 A1Left",
       "status": "OK",
       "actual": "请求bdb=5.0° 实测bdb=5.0000000000° bda=-0.1500 -> A4=40.0 A5=0.0，含 A1Left",
-      "seconds": 0.002
+      "seconds": 0.001
     },
     {
       "id": "TC-ALG-034",
@@ -508,7 +508,7 @@
       "expected": "strategies 含 A1Right",
       "status": "OK",
       "actual": "请求bdb=10.0° 实测bdb=10.0000000000° bda=-0.1500 -> A4=0.0 A5=-130.0，含 A1Right",
-      "seconds": 0.002
+      "seconds": 0.001
     },
     {
       "id": "TC-ALG-035",
@@ -523,7 +523,7 @@
       "expected": "两者均不含",
       "status": "NG",
       "actual": "bdb=40.0000° A5=-90.0 时 strategies=['A1Right', 'A2Up', 'A3Up', 'A4Up']（不含 A1 方向）",
-      "seconds": 0.002
+      "seconds": 0.001
     },
     {
       "id": "TC-ALG-036",
@@ -583,7 +583,7 @@
       "expected": "不返回 None，或调用方有明确处理，不导致运行中断",
       "status": "OK",
       "actual": "未触发弃权路径，正常返回动作",
-      "seconds": 0.002
+      "seconds": 0.001
     },
     {
       "id": "TC-ALG-040",
@@ -598,7 +598,7 @@
       "expected": "动作量级与 1°/步 的预算相称，裁剪后不失真",
       "status": "OK",
       "actual": "50 组样本动作最大绝对值 100.000（env 侧裁剪为 [-1,1]，单位：度/步）",
-      "seconds": 0.08
+      "seconds": 0.048
     },
     {
       "id": "TC-ALG-041",
@@ -613,7 +613,7 @@
       "expected": "换回合后 step 重置为 1",
       "status": "OK",
       "actual": "连续 6 次后 step=6，换目标后 step=1（预期 1）",
-      "seconds": 0.011
+      "seconds": 0.006
     },
     {
       "id": "TC-ALG-042",
@@ -628,7 +628,7 @@
       "expected": "最终距离 ≤ 0.05 m",
       "status": "OK",
       "actual": "93 步结束，最终夹爪-目标距离 0.04850 m（阈值 0.05），得分 100.00",
-      "seconds": 0.157
+      "seconds": 0.086
     },
     {
       "id": "TC-ALG-043",
@@ -643,7 +643,7 @@
       "expected": "最终距离 ≤ 0.05 m",
       "status": "OK",
       "actual": "93 步结束，最终距离 0.04850 m，得分 100.00",
-      "seconds": 0.153
+      "seconds": 0.087
     },
     {
       "id": "TC-ALG-044",
@@ -658,7 +658,7 @@
       "expected": "最终距离 ≤ 0.05 m",
       "status": "OK",
       "actual": "92 步结束，最终距离 0.04850 m，得分 100.00",
-      "seconds": 0.134
+      "seconds": 0.091
     },
     {
       "id": "TC-ALG-045",
@@ -673,7 +673,7 @@
       "expected": "最终距离 ≤ 0.05 m",
       "status": "OK",
       "actual": "92 步结束，最终距离 0.04850 m，得分 100.00",
-      "seconds": 0.121
+      "seconds": 0.088
     },
     {
       "id": "TC-ALG-046",
@@ -688,7 +688,7 @@
       "expected": "最终距离 ≤ 0.05 m",
       "status": "OK",
       "actual": "92 步结束，最终距离 0.04850 m，得分 100.00",
-      "seconds": 0.111
+      "seconds": 0.089
     },
     {
       "id": "TC-ALG-047",
@@ -703,7 +703,7 @@
       "expected": "最终距离 ≤ 0.05 m",
       "status": "OK",
       "actual": "低年级组：93 步结束，最终距离 0.04850 m，得分 100.00",
-      "seconds": 0.109
+      "seconds": 0.091
     },
     {
       "id": "TC-ALG-048",
@@ -718,7 +718,7 @@
       "expected": "成功率 ≥ 80%",
       "status": "OK",
       "actual": "10 个随机回合成功率 100%，最终距离均值 0.04850 m（要求 ≥80%）",
-      "seconds": 1.121
+      "seconds": 0.838
     },
     {
       "id": "TC-ALG-049",
@@ -733,7 +733,7 @@
       "expected": "步数 ≤ 100",
       "status": "OK",
       "actual": "实际执行 93 步（上限 100）",
-      "seconds": 0.114
+      "seconds": 0.094
     },
     {
       "id": "TC-ALG-050",
@@ -748,7 +748,7 @@
       "expected": "回合在 100 步内正常终止",
       "status": "OK",
       "actual": "terminated=True，执行 93 步",
-      "seconds": 0.112
+      "seconds": 0.087
     },
     {
       "id": "TC-ALG-051",
@@ -778,7 +778,7 @@
       "expected": "max|action| ≤ 1.0",
       "status": "NG",
       "actual": "最大动作绝对值 100.000（契约上限 1.0，env.py:122-123 据此裁剪）；最差样本 action=[100.0, 100.0, 100.0, 100.0, 29.458, 0.0]",
-      "seconds": 0.004
+      "seconds": 0.003
     },
     {
       "id": "TC-ALG-053",
@@ -793,7 +793,7 @@
       "expected": "相邻步跳变 ≤ 30°",
       "status": "NG",
       "actual": "相邻步目标角最大跳变 177.4°（上限 30°），共 93 步",
-      "seconds": 0.108
+      "seconds": 0.082
     },
     {
       "id": "TC-ALG-054",
@@ -808,7 +808,7 @@
       "expected": "最终距离 ≤ 0.04 m（预留 ≥20% 余量）",
       "status": "NG",
       "actual": "93 步结束，最终距离 0.04850 m（余量要求 ≤0.04，成功阈值 0.05），得分 100.00",
-      "seconds": 0.106
+      "seconds": 0.083
     }
   ],
   "summary": {

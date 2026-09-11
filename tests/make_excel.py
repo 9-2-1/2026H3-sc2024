@@ -10,8 +10,9 @@
     项目根目录\\附录1：测试用例清单（模块一）.xlsx   34 条，人工设计的黑盒用例
     项目根目录\\附录1：测试用例清单（模块二）.xlsx   20 条，AI 扩展生成的进阶用例
 
-模板 Information 页的"测试用例数"与 OK/POK/NG/NT 项均为公式，按 L 列自动统计，
-分模块出件后无需手工改数。
+模板 Information 页的 OK/POK/NG/NT 四项为公式，按 L 列自动统计，分模块出件后
+无需手工改数；"测试用例数"一格模板自带公式有误（Excel 2003 行数上限写法），
+由本脚本按实际条数写入，详见 fill_information()。
 """
 from __future__ import annotations
 
@@ -150,6 +151,11 @@ def fill_information(ws, module: dict, total: int, today: str) -> None:
     ws['E11'] = '（待填写）'
     ws['J11'] = today
     ws['B16'] = module['overview']
+    # 模板自带的"测试用例数"公式是 =65535-COUNTBLANK('Test Cases测试用例'!A:A)，
+    # 那是 Excel 2003（65536 行）时代的写法；在 xlsx（1048576 行）下会算出
+    # 65535-1048541 = -983006 这样的负数，且 B43"用例总个数"直接引用该格。
+    # 这里按实际条数直接写入，避免打开后显示负数。
+    ws['E13'] = total
     ws['B20'] = today
     ws['C20'] = '1.00'
     ws['E20'] = module['revision_note']
