@@ -385,6 +385,12 @@ class MyCustomAlgorithm(BaseAlgorithm):
             p4z = pez - p4ez
 
             pec = np.sqrt(pex**2 + pey**2)
+            # 腕心横向偏置 p4ey 由当前姿态决定。目标水平投影距离 pec 与之相当
+            # （即目标贴近基座竖直轴线）时，平面上该构型无解，开方项为负，
+            # NaN 会沿 a1~a4 一路传播出去。此处退化为保持姿态：返回零动作。
+            if pec**2 - p4ey**2 < 0.1 * p4ey**2:
+                self.step += 1
+                return np.zeros(6)
             p4l = np.sqrt(pec**2 - p4ey**2) + p4ex
             p4a = (
                 180
@@ -518,6 +524,9 @@ class MyCustomAlgorithm(BaseAlgorithm):
         # print("xyz_target", self.xyz_target)
 
         action = self.target - angles
+        # 契约兜底：env.py:122 的 np.clip 不拦截 NaN，而 NaN 动作会让 PyBullet
+        # 的四元数归一化抛 ValueError 直接中断整场评测，任何情况下都不许下发。
+        action = np.nan_to_num(action, nan=0.0, posinf=0.0, neginf=0.0)
         actionmax = np.max(np.abs(action))
         # print(self.Muli, actionmax, action)
         if actionmax > 1:
