@@ -529,9 +529,13 @@ class MyCustomAlgorithm(BaseAlgorithm):
         action = np.nan_to_num(action, nan=0.0, posinf=0.0, neginf=0.0)
         actionmax = np.max(np.abs(action))
         # print(self.Muli, actionmax, action)
-        if actionmax > 1:
-            # action /= actionmax
-            pass
+        # 基类约定 action 落在 [-1,1]（见本文件 get_action 的 docstring），
+        # env.py:122-123 也按该区间裁剪。原先此处只留 pass，等于把 ±100° 的
+        # 关节误差原样下发、靠环境替我们守约。这里自行饱和到同一区间：做的正是
+        # env 那一步，故实际下发量逐位不变，只是不再依赖被调用方兜底。
+        # ⚠ 不要改成按 actionmax 归一化：那会把非最大轴按比例压小，而 100 步
+        #   预算已无余量，实测端到端得分由 100 掉到 0（见缺陷报告 D2）。
+        action = np.clip(action, -1.0, 1.0)
 
         self.step += 1
         return action
