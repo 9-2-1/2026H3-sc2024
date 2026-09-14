@@ -39,6 +39,17 @@ FIRST_DATA_ROW = 2
 # 重要级别：模板要求 High / Medium / Low
 LEVEL_MAP = {'高': 'High', '中': 'Medium', '低': 'Low'}
 
+# 本轮属于「修改」而非「新增」的用例。其余用例均为本轮新写。
+# TC-ALG-039 原断言只覆盖「是否返回 None」一条路径（POK 分支不可达、
+# OK 分支不校验返回值），在提交 1f0f52d 中收紧为类型/形状/有限性三项真判据，
+# 故计为修改。注意 650fb36「修复用例52」改的是 team_algorithm.py 而非用例，
+# TC-ALG-052 仍属新增。
+MODIFIED_IDS = {'TC-ALG-039'}
+
+# ⚠ 不要清空 N2:N5。它看着像残留数据，实际是 Excel 定义名 `Result`
+#   （='Test Cases测试用例'!$N$2:$N$5），是状态列 L2:L12389 数据有效性
+#   下拉框的数据源；抹掉会让交付件里状态列的下拉框变成空列表。见 assert 守护。
+
 
 def method_tag(method: str) -> str:
     if method.startswith('等价类'):
@@ -176,7 +187,9 @@ def write_module(module: dict, cases: list[dict], today: str) -> dict:
             case['title'],                                # C 测试用例标题
             LEVEL_MAP.get(case['level'], case['level']),  # D 重要级别
             '是',                                          # E 是否自动用例
-            '新增',                                        # F 是否新增修改用例
+            # F 是否新增修改用例：不能一律写「新增」，否则本轮收紧过的
+            # TC-ALG-039 会被谎报为新增用例。依 MODIFIED_IDS 区分。
+            '修改' if case['id'] in MODIFIED_IDS else '新增',
             case['pre'],                                  # G 预置条件
             case['input'],                                # H 输入
             case['steps'],                                # I 操作步骤
@@ -194,6 +207,10 @@ def write_module(module: dict, cases: list[dict], today: str) -> dict:
 
     widen_for_readability(wb[SHEET_INFO])
     fill_information(wb[SHEET_INFO], module, len(cases), today)
+
+    # 守护状态列下拉框的数据源，防止它被当成"残留数据"清掉（见文件头 ⚠）。
+    assert wb.defined_names['Result'].attr_text.endswith('$N$2:$N$5'), (
+        '模板的 Result 定义名已变更，状态列 L 的数据有效性下拉框会失效')
 
     out = os.path.join(ROOT, module['filename'])
     wb.save(out)
