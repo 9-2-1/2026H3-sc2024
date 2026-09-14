@@ -511,16 +511,26 @@ def c038():
 
 
 def c039():
-    """异常安全：不可达时返回 None，调用方 np.clip(None) 会崩溃。"""
+    """接口契约：动作必须是形状 (6,) 的有限实数数组。
+
+    源出缺陷 D0：旧版 team_algorithm_60.py:447 在目标超出 ±100° 可达范围时以
+    `return None` 弃权，而 env.py:123 会对动作做 np.clip(action,-1,1)，np.clip(None)
+    抛 TypeError；test.py 无 try/except，整场评测中途中断。当前版本已废弃该弃权路径，
+    故此处改为直接对返回值立断言——三项判据在旧版上为假（返回 NoneType）、在当前版
+    上为真，D0 由此获得活的回归守护。
+    """
     alg = MyCustomAlgorithm()
     r = _quiet(alg.get_action, make_obs([0.0] * 6, [0.0, 0.85, 0.2], [0.1, 0.6, 0.2]), None)
-    if r is None:
-        try:
-            np.clip(r, -1, 1)
-            return 'POK', '返回 None 但下游未崩溃（不可达约定需调用方处理）'
-        except TypeError as e:
-            return 'NG', f'返回 None，env.step 中 np.clip 抛出 TypeError: {e}'
-    return 'OK', '未触发弃权路径，正常返回动作'
+    if not isinstance(r, np.ndarray):
+        return 'NG', (f'返回 {type(r).__name__} 而非 ndarray；'
+                      f'env.py:123 的 np.clip(action,-1,1) 将抛 TypeError，'
+                      f'test.py 无捕获，整场评测中断')
+    if r.shape != (6,):
+        return 'NG', (f'返回形状 {r.shape} 而非 (6,)，'
+                      f'与 team_algorithm.py:241 声明的接口契约不符')
+    if not np.isfinite(r).all():
+        return 'NG', f'动作含非有限值 {r}；NaN 会在 PyBullet 四元数归一化处抛 ValueError'
+    return 'OK', f'返回形状 (6,) 的有限实数数组 action={np.array2string(r, precision=3)}'
 
 
 def c040():
@@ -907,11 +917,11 @@ CASES = [
          inp='随机种子 1000 的目标与障碍',
          steps='取 alg.target 与 alg.base_angles 求最大绝对差',
          exp='最大单关节变化 ≤ 100°', check=c038),
-    dict(id='TC-ALG-039', item='异常安全', title='弃权返回 None 对下游调用的影响', level='高',
+    dict(id='TC-ALG-039', item='异常安全', title='动作返回值满足 (6,) 有限实数数组契约', level='高',
          pre='env.step 会对动作执行 np.clip(action,-1,1)', method='场景法（异常路径）',
-         inp='起始关节角全 0、解算需超过 100° 变化的观测',
-         steps='调用 get_action；对返回值执行 np.clip 模拟 env.step',
-         exp='不返回 None，或调用方有明确处理，不导致运行中断', check=c039),
+         inp='起始关节角全 0、目标超出 ±100° 可达范围（旧版 D0 的弃权触发条件）',
+         steps='调用 get_action；校验返回值的类型、形状与有限性',
+         exp='返回形状 (6,) 的有限实数数组；不返回 None、不含 NaN/Inf', check=c039),
     dict(id='TC-ALG-040', item='动作输出', title='输出动作量级落在 env 裁剪区间内', level='中',
          pre='env.py:122-123 将动作裁剪到 [-1,1]', method='等价类划分（输出值域）',
          inp='中立位附近 50 组随机观测',
