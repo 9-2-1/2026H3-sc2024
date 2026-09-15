@@ -1,13 +1,4 @@
-# -*- coding: utf-8 -*-
-"""参考运动学模型（独立于被测模块实现）。
-
-严格按 URDF 关节链与 env.py 的语义重新实现，作为测试的"真值基准"（test oracle）：
-  - 关节链取自 fr5_description/urdf/fr5v6.urdf 的 <joint><origin>
-  - 基座姿态取自 env.py:30 的 baseOrientation = RPY(0, 0, pi)
-  - 夹爪中心公式取自 env.py:140-147 的 get_dis()
-
-刻意不复用 team_algorithm.py 的任何代码，避免"用被测实现的假设去验证被测实现"。
-"""
+"""参考运动学模型（独立于被测模块实现）。刻意不复用 team_algorithm.py 的任何代码，避免重言式测试"""
 from __future__ import annotations
 
 import math
@@ -15,8 +6,7 @@ from typing import List, Tuple
 
 import numpy as np
 
-# ---------------------------------------------------------------- 关节链定义
-# (joint_xyz, joint_rpy, is_revolute)  —— 与 fr5v6.urdf 一一对应
+# (joint_xyz, joint_rpy, is_revolute)
 JOINTS = [
     ("j1", (0.0, 0.0, 0.0), (0.0, 0.0, 0.0), True),
     ("j2", (0.0, 0.0, 0.152), (1.5708, 0.0, 0.0), True),
@@ -27,7 +17,7 @@ JOINTS = [
     ("arm_hand_joint", (0.0, 0.0, 0.12), (0.0, 0.0, 3.14159), False),
 ]
 
-# URDF 关节限位（弧度），取自 fr5v6.urdf 的 <limit lower/upper>
+# URDF 关节限位（弧度）
 JOINT_LIMITS = [
     (-3.0543, 3.0543),   # j1
     (-4.6251, 1.4835),   # j2
@@ -37,22 +27,16 @@ JOINT_LIMITS = [
     (-3.0543, 3.0543),   # j6
 ]
 
-BASE_RPY = (0.0, 0.0, math.pi)   # env.py:30 baseOrientation
-# env.py:142 中夹爪中心相对 link7 的固定偏移
+BASE_RPY = (0.0, 0.0, math.pi)
 GRIPPER_OFFSET = np.array([0.0, 0.0, 0.15])
 
-# fr5v6.urdf 中 j6_Link 的 <inertial><origin> xyz（关节帧 -> 质心的偏置）。
-# env.py:141 的 getLinkState(fr5, 6)[0] 返回质心，本模块的 forward_kinematics
-# 推出的是关节帧，两者相差这个常数。
 LINK6_INERTIAL_XYZ = np.array([7.7496e-05, 1.7751e-05, 0.076122])
 
-# env.py:61-70 reset() 设置的初始关节角（度）
 NEUTRAL_DEG = np.array([-49.45849125928217, -57.601209583849, -138.394013961943,
                         -164.0052115563118, -49.45849125928217, 0.0])
 
 
 def rpy_to_matrix(rpy) -> np.ndarray:
-    """URDF 固定轴 XYZ 外旋约定：R = Rz(y) @ Ry(p) @ Rx(r)。"""
     r, p, y = rpy
     cr, sr = math.cos(r), math.sin(r)
     cp, sp = math.cos(p), math.sin(p)
@@ -69,11 +53,6 @@ def rot_z(angle: float) -> np.ndarray:
 
 
 def forward_kinematics(joint_angles_rad) -> List[Tuple[np.ndarray, np.ndarray]]:
-    """返回每个关节变换后的 (位置, 旋转矩阵) 列表，共 7 项。
-
-    第 i 项即 PyBullet 中 link (i+1) 的世界位姿——由 team_algorithm.py 末尾的
-    footnote（由 env.debugdoor() 真实输出）交叉验证。
-    """
     P = np.zeros(3)
     R = rpy_to_matrix(BASE_RPY)
     out: List[Tuple[np.ndarray, np.ndarray]] = []
@@ -87,16 +66,6 @@ def forward_kinematics(joint_angles_rad) -> List[Tuple[np.ndarray, np.ndarray]]:
 
 
 def gripper_centre(joint_angles_deg) -> np.ndarray:
-    """复刻 env.py:140-147 get_dis() 中的夹爪中心世界坐标。
-
-    env 用 getLinkState(fr5, 6)[0] 取位置、getLinkState(fr5, 7)[1] 取姿态，
-    即本模块 forward_kinematics 的第 6 项（索引 5）与第 7 项（索引 6）。
-
-    注意 PyBullet 的 getLinkState(id, i)[0] 返回的是该连杆的**质心**
-    （linkWorldPosition），[4] 才是关节帧位置（worldLinkFramePosition）。
-    本模块 forward_kinematics 推出的是关节帧，故须再叠加 j6_Link 的
-    <inertial><origin> 偏置才与 env 对齐——否则夹爪中心会恒定偏 0.076122 m。
-    """
     rad = np.asarray(joint_angles_deg, dtype=float) * math.pi / 180.0
     mats = forward_kinematics(rad)
     link6_frame_pos, link6_frame_rot = mats[5]
@@ -106,7 +75,6 @@ def gripper_centre(joint_angles_deg) -> np.ndarray:
 
 
 def clamp_to_limits(joint_angles_rad) -> np.ndarray:
-    """按 URDF 限位截断 6 个转动关节（PyBullet 位置控制会强制执行限位）。"""
     ang = np.asarray(joint_angles_rad, dtype=float).copy()
     for i, (lo, hi) in enumerate(JOINT_LIMITS):
         ang[i] = min(max(ang[i], lo), hi)
@@ -114,5 +82,4 @@ def clamp_to_limits(joint_angles_rad) -> np.ndarray:
 
 
 def normalize_angles(deg) -> np.ndarray:
-    """复刻 env.py:101-104 的观测归一化：d/180 -> [-1,1] -> [0,1]。"""
     return ((np.asarray(deg, dtype=float) / 180.0) + 1.0) / 2.0
