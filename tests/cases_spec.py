@@ -1162,7 +1162,7 @@ CASES = [
          steps='跑完整回合并记录最终夹爪-目标距离',
          exp='最终距离 ≤ 0.04 m（预留 ≥20% 余量）', check=c054),
     dict(id='TC-ALG-055', item='接口契约', title='观测入参不得被 get_action 就地修改', level='高',
-         pre='observation 由 env.get_observation() 构造，所有权属于评测框架', method='代码审查 + 边界值分析（含键盘微调通路）',
+         pre='observation 由 env.get_observation() 构造，所有权属于评测框架', method='白盒分析 + 边界值分析（含键盘微调通路）',
          inp='观测 (1,12)，Mock env 按住键 1 与键 9',
          steps='调用 get_action(obs, env)，比对调用前后 obs 是否逐位相同，并检查内部状态与入参是否共享内存',
          exp='obs 逐位不变，且内部状态不与入参共享内存', check=c055),

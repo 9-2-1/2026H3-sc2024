@@ -13,7 +13,7 @@
       "expected": "返回形状 (6,) 的有限实数数组",
       "status": "OK",
       "actual": "action=[1.0, 1.0, 1.0, 1.0, 1.0, 0.0] shape=(6,)",
-      "seconds": 0.001
+      "seconds": 0.002
     },
     {
       "id": "TC-ALG-002",
@@ -28,7 +28,7 @@
       "expected": "0→-180°，1→+180°",
       "status": "OK",
       "actual": "归一化下界=0.0 上界=1.0；反解下界=-180.0°；返回类型 lo=ndarray hi=ndarray",
-      "seconds": 0.002
+      "seconds": 0.003
     },
     {
       "id": "TC-ALG-003",
@@ -58,7 +58,7 @@
       "expected": "正常返回动作，不抛异常",
       "status": "OK",
       "actual": "单参数调用成功，返回 ndarray",
-      "seconds": 0.001
+      "seconds": 0.002
     },
     {
       "id": "TC-ALG-005",
@@ -73,7 +73,7 @@
       "expected": "正常返回动作，不抛异常",
       "status": "OK",
       "actual": "双参数调用成功，返回 ndarray",
-      "seconds": 0.016
+      "seconds": 0.018
     },
     {
       "id": "TC-ALG-006",
@@ -133,7 +133,7 @@
       "expected": "design_target 更新为新目标",
       "status": "OK",
       "actual": "design_target 已更新为 [0.1, 0.85, 0.2]",
-      "seconds": 0.002
+      "seconds": 0.003
     },
     {
       "id": "TC-ALG-010",
@@ -193,7 +193,7 @@
       "expected": "最大偏差 < 1e-6 m",
       "status": "OK",
       "actual": "30 组随机位姿最大位置偏差 0.00e+00 m（阈值 1e-6）",
-      "seconds": 0.01
+      "seconds": 0.014
     },
     {
       "id": "TC-ALG-014",
@@ -253,7 +253,7 @@
       "expected": "模型内偏差 ≤ 0.05 m",
       "status": "OK",
       "actual": "回合结束后，按模块自身 FK 计算 self.target 处夹爪中心距目标 0.04850 m（Muli=0.04850，阈值 0.05 m）",
-      "seconds": 0.081
+      "seconds": 0.109
     },
     {
       "id": "TC-ALG-018",
@@ -538,7 +538,7 @@
       "expected": "无键保持 A4=0、A5=-130、A6=0；键5+0 → A5=-129；键4+9 → A4=-1；键6+9 → A6=-1",
       "status": "OK",
       "actual": "查表 A4=0.0 A5=-130.0 A6=0.0；键盘覆盖后 键5+0→A5=-129.0，键4+9→A4=-1.0，键6+9→A6=-1.0",
-      "seconds": 0.004
+      "seconds": 0.005
     },
     {
       "id": "TC-ALG-037",
@@ -553,7 +553,7 @@
       "expected": "不抛 arccos 定义域异常，返回动作或 None",
       "status": "OK",
       "actual": "超程目标处理正常，返回 ndarray",
-      "seconds": 0.002
+      "seconds": 0.001
     },
     {
       "id": "TC-ALG-038",
@@ -598,7 +598,7 @@
       "expected": "动作量级与 1°/步 的预算相称，裁剪后不失真",
       "status": "OK",
       "actual": "50 组样本动作最大绝对值 1.000（env 侧裁剪为 [-1,1]，单位：度/步）",
-      "seconds": 0.049
+      "seconds": 0.067
     },
     {
       "id": "TC-ALG-041",
@@ -613,7 +613,7 @@
       "expected": "换回合后 step 重置为 1",
       "status": "OK",
       "actual": "连续 6 次后 step=6，换目标后 step=1（预期 1）",
-      "seconds": 0.006
+      "seconds": 0.008
     },
     {
       "id": "TC-ALG-042",
@@ -628,7 +628,7 @@
       "expected": "最终距离 ≤ 0.05 m",
       "status": "OK",
       "actual": "93 步结束，最终夹爪-目标距离 0.04850 m（阈值 0.05），得分 100.00",
-      "seconds": 0.095
+      "seconds": 0.109
     },
     {
       "id": "TC-ALG-043",
@@ -643,7 +643,7 @@
       "expected": "最终距离 ≤ 0.05 m",
       "status": "OK",
       "actual": "93 步结束，最终距离 0.04850 m，得分 100.00",
-      "seconds": 0.086
+      "seconds": 0.109
     },
     {
       "id": "TC-ALG-044",
@@ -658,7 +658,7 @@
       "expected": "最终距离 ≤ 0.05 m",
       "status": "OK",
       "actual": "92 步结束，最终距离 0.04850 m，得分 100.00",
-      "seconds": 0.082
+      "seconds": 0.109
     },
     {
       "id": "TC-ALG-045",
@@ -673,7 +673,7 @@
       "expected": "最终距离 ≤ 0.05 m",
       "status": "OK",
       "actual": "92 步结束，最终距离 0.04850 m，得分 100.00",
-      "seconds": 0.087
+      "seconds": 0.103
     },
     {
       "id": "TC-ALG-046",
@@ -688,7 +688,7 @@
       "expected": "最终距离 ≤ 0.05 m",
       "status": "OK",
       "actual": "92 步结束，最终距离 0.04850 m，得分 100.00",
-      "seconds": 0.083
+      "seconds": 0.107
     },
     {
       "id": "TC-ALG-047",
@@ -703,7 +703,7 @@
       "expected": "最终距离 ≤ 0.05 m",
       "status": "OK",
       "actual": "低年级组：93 步结束，最终距离 0.04850 m，得分 100.00",
-      "seconds": 0.082
+      "seconds": 0.112
     },
     {
       "id": "TC-ALG-048",
@@ -718,7 +718,7 @@
       "expected": "成功率 ≥ 80%",
       "status": "OK",
       "actual": "10 个随机回合成功率 100%，最终距离均值 0.04850 m（要求 ≥80%）",
-      "seconds": 0.821
+      "seconds": 1.171
     },
     {
       "id": "TC-ALG-049",
@@ -733,7 +733,7 @@
       "expected": "步数 ≤ 100",
       "status": "OK",
       "actual": "实际执行 93 步（上限 100）",
-      "seconds": 0.085
+      "seconds": 0.132
     },
     {
       "id": "TC-ALG-050",
@@ -748,7 +748,7 @@
       "expected": "回合在 100 步内正常终止",
       "status": "OK",
       "actual": "terminated=True，执行 93 步",
-      "seconds": 0.09
+      "seconds": 0.114
     },
     {
       "id": "TC-ALG-051",
@@ -778,7 +778,7 @@
       "expected": "max|action| ≤ 1.0",
       "status": "OK",
       "actual": "最大动作绝对值 1.000（契约上限 1.0，env.py:122-123 据此裁剪）；最差样本 action=[1.0, 1.0, 1.0, 1.0, 1.0, 0.0]",
-      "seconds": 0.003
+      "seconds": 0.004
     },
     {
       "id": "TC-ALG-053",
@@ -793,7 +793,7 @@
       "expected": "相邻步跳变 ≤ 30°",
       "status": "NG",
       "actual": "相邻步目标角最大跳变 177.4°（上限 30°），共 93 步",
-      "seconds": 0.083
+      "seconds": 0.131
     },
     {
       "id": "TC-ALG-054",
@@ -808,7 +808,7 @@
       "expected": "最终距离 ≤ 0.04 m（预留 ≥20% 余量）",
       "status": "NG",
       "actual": "93 步结束，最终距离 0.04850 m（余量要求 ≤0.04，成功阈值 0.05），得分 100.00",
-      "seconds": 0.081
+      "seconds": 0.115
     },
     {
       "id": "TC-ALG-055",
@@ -816,14 +816,14 @@
       "item": "接口契约",
       "title": "观测入参不得被 get_action 就地修改",
       "level": "高",
-      "method": "代码审查 + 边界值分析（含键盘微调通路）",
+      "method": "白盒分析 + 边界值分析（含键盘微调通路）",
       "pre": "observation 由 env.get_observation() 构造，所有权属于评测框架",
       "input": "观测 (1,12)，Mock env 按住键 1 与键 9",
       "steps": "调用 get_action(obs, env)，比对调用前后 obs 是否逐位相同，并检查内部状态与入参是否共享内存",
       "expected": "obs 逐位不变，且内部状态不与入参共享内存",
       "status": "OK",
       "actual": "调用后 observation 逐位不变（长度 12 全等），且 self.xyz_target 与入参不共享内存",
-      "seconds": 0.001
+      "seconds": 0.003
     },
     {
       "id": "TC-ALG-056",
@@ -838,7 +838,7 @@
       "expected": "A4/A5/A6 在 j4/j5/j6 限位内，且 alg.target 六分量均在各自限位内",
       "status": "OK",
       "actual": "10 档姿态的 A4/A5/A6 与下达目标角全部落在 URDF 关节限位内（bdb=40°→A4=10 A5=-90 A6=0；bdb=20°→A4=10 A5=-120 A6=0；bdb=10°→A4=0 A5=-130 A6=0；bdb=7°→A4=-5 A5=-140 A6=0；bdb=4°→A4=40 A5=0 A6=0；bdb=4°→A4=15 A5=-20 A6=0；bdb=0°→A4=15 A5=-20 A6=0；bdb=-10°→A4=10 A5=-20 A6=0；bdb=-20°→A4=10 A5=-50 A6=0；bdb=-30°→A4=10 A5=-90 A6=0）；最大单关节行程 100.0°，与 100 步 × 1°/步 的预算持平",
-      "seconds": 0.009
+      "seconds": 0.013
     }
   ],
   "summary": {
