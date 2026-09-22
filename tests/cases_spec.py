@@ -76,10 +76,32 @@ def fresh_env(seed=1000, target=None, obstacle=None, is_senior=True) -> MockEnv:
 # 中性位（env.py:61-70）
 NEUTRAL = [float(x) for x in KR.NEUTRAL_DEG]
 # team_algorithm.py:553 footnote —— env.debugdoor() 的真实 PyBullet 输出（零位）
+#
+# ⚠ 坐标帧说明（模块一 E1、模块二 007 两次踩同一个坑）：
+#   getLinkState(id, i)[0] = worldLinkPosition        —— 连杆**质心**帧
+#   getLinkState(id, i)[4] = worldLinkFramePosition   —— 连杆（关节）**坐标系**原点
+# 上面这份 FOOTNOTE_POS 与 PyBullet 的 [4] 逐位吻合（实测偏差 ~1e-8），即**连杆帧**；
+# 对应地 forward_kinematics_mat 的两列是：
+#   mats[i][0] = P  （关节帧链）↔ PyBullet [4]
+#   mats[i][2] = P0 （inertial 质心链）↔ PyBullet [0]
+# 拿 mats[i][2] 去比 FOOTNOTE_POS 就是拿质心比连杆帧，必然差 0.076~0.15 m。
 FOOTNOTE_POS = [
     [0.0, 0.0, 0.0], [0.0, 0.0, 0.152], [0.425, 0.0, 0.152], [0.820010, 0.0, 0.152],
     [0.820010, 0.102100, 0.152], [0.820010, 0.102099, 0.050000],
     [0.820010, 0.222099, 0.049999],
+]
+# PyBullet 零位 getLinkState(i)[0]（质心帧）真值，实测命令见
+# C:\Windows\Temp\sc2024\probe2.py：关重力 + VELOCITY_CONTROL force=0 + resetJointState(0)，
+# 否则 reset() 的 POSITION_CONTROL 会把机械臂拽到中立位、重力会把它压弯，量到的都不是零位。
+# 与 FK 的 mats[i][2] 偏差 ~1e-17（Link2~Link7）。
+FOOTNOTE_COM_POS = [
+    [-0.000001, 0.004092, 0.146290],
+    [0.212500, 0.134600, 0.151999],
+    [0.612930, 0.006636, 0.151999],
+    [0.820010, 0.097155, 0.148246],
+    [0.820010, 0.105961, 0.053743],
+    [0.819933, 0.178221, 0.050017],
+    [1.865010, 0.122099, 0.060002],
 ]
 FOOTNOTE_ROT = [
     [[-1, 0, 0], [0, -1, 0], [0, 0, 1]],
@@ -259,16 +281,23 @@ def c013():
 
 
 def c014():
-    """白盒：mats[i][2]（link 帧）不应被 URDF <inertial> 质心 origin 污染。"""
+    """白盒：mats[i][2]（inertial 质心链）应与 PyBullet 报告的连杆质心 [0] 一致。
+
+    这一列是 abc_endeffe / env.get_dis 的公共底座：env.py:141 用 getLinkState(fr5,6)[0]，
+    即**质心帧**。量的时候必须关重力 + 断开电机再 resetJointState(0)，否则量到的是
+    中立位或下垂姿态（见 FOOTNOTE_COM_POS 上方注释）。
+    """
     mats = forward_kinematics_mat(robot, A([0.0] * 7), 6)
     devs = {}
-    for i in range(1, 7):
-        devs[f'Link{i+1}'] = float(np.max(np.abs(mats[i][2] - np.asarray(FOOTNOTE_POS[i]))))
+    for i in range(1, 7):          # FK 下标 i ↔ PyBullet 连杆编号 i+1
+        devs[f'Link{i+1}'] = float(
+            np.max(np.abs(mats[i][2] - np.asarray(FOOTNOTE_COM_POS[i]))))
     bad = {k: v for k, v in devs.items() if v > 1e-5}
     if bad:
-        return 'NG', ('link 帧位置被 <inertial> 质心 origin 污染，与 PyBullet 实际报告不符：'
+        return 'NG', ('质心帧位置与 PyBullet getLinkState(i)[0] 不一致：'
                       + '，'.join(f'{k} 偏差 {v:.5f}m' for k, v in bad.items()))
-    return 'OK', 'link 帧位置与 PyBullet 真值一致'
+    return 'OK', ('质心帧位置与 PyBullet getLinkState(i)[0] 一致，最大偏差 '
+                  f'{max(devs.values()):.1e} m')
 
 
 def c015():
@@ -792,10 +821,10 @@ CASES = [
          inp='30 组 [-120°,120°] 随机关节角',
          steps='分别用被测 FK 与参考 FK 求 7 个连杆位置并求最大偏差',
          exp='最大偏差 < 1e-6 m', check=c013),
-    dict(id='TC-ALG-014', item='运动学正解', title='link 帧位置未被 URDF 质心 origin 污染', level='高',
-         pre='URDF <inertial> 的 origin 为质心，不能当作运动学偏移', method='白盒（数据流检查）',
+    dict(id='TC-ALG-014', item='运动学正解', title='质心帧位置与 PyBullet getLinkState(i)[0] 一致', level='高',
+         pre='env.get_dis 取的是质心帧 [0]，不是连杆帧 [4]；量零位须关重力并断开电机', method='白盒（数据流检查）',
          inp='零位关节角',
-         steps='比较 mats[i][2] 与 PyBullet 真值位置',
+         steps='比较 mats[i][2]（inertial 质心链）与 PyBullet getLinkState(i)[0] 真值',
          exp='与真值一致（偏差 < 1e-5 m）', check=c014),
     dict(id='TC-ALG-015', item='距离度量', title='abc_getdist 距离度量的自反性与正定性', level='中',
          pre='模块已实例化', method='边界值分析（零距离）',

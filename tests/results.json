@@ -13,7 +13,7 @@
       "expected": "返回形状 (6,) 的有限实数数组",
       "status": "OK",
       "actual": "action=[1.0, 1.0, 1.0, 1.0, 1.0, 0.0] shape=(6,)",
-      "seconds": 0.001
+      "seconds": 0.002
     },
     {
       "id": "TC-ALG-002",
@@ -193,21 +193,21 @@
       "expected": "最大偏差 < 1e-6 m",
       "status": "OK",
       "actual": "30 组随机位姿最大位置偏差 0.00e+00 m（阈值 1e-6）",
-      "seconds": 0.01
+      "seconds": 0.012
     },
     {
       "id": "TC-ALG-014",
       "module": "模块二",
       "item": "运动学正解",
-      "title": "link 帧位置未被 URDF 质心 origin 污染",
+      "title": "质心帧位置与 PyBullet getLinkState(i)[0] 一致",
       "level": "高",
       "method": "白盒（数据流检查）",
-      "pre": "URDF <inertial> 的 origin 为质心，不能当作运动学偏移",
+      "pre": "env.get_dis 取的是质心帧 [0]，不是连杆帧 [4]；量零位须关重力并断开电机",
       "input": "零位关节角",
-      "steps": "比较 mats[i][2] 与 PyBullet 真值位置",
+      "steps": "比较 mats[i][2]（inertial 质心链）与 PyBullet getLinkState(i)[0] 真值",
       "expected": "与真值一致（偏差 < 1e-5 m）",
-      "status": "NG",
-      "actual": "link 帧位置被 <inertial> 质心 origin 污染，与 PyBullet 实际报告不符：Link2 偏差 0.21250m，Link3 偏差 0.18793m，Link4 偏差 0.09715m，Link5 偏差 0.09826m，Link6 偏差 0.07612m，Link7 偏差 1.04500m",
+      "status": "OK",
+      "actual": "质心帧位置与 PyBullet getLinkState(i)[0] 一致，最大偏差 5.0e-07 m",
       "seconds": 0.0
     },
     {
@@ -253,7 +253,7 @@
       "expected": "模型内偏差 ≤ 0.05 m",
       "status": "OK",
       "actual": "回合结束后，按模块自身 FK 计算 self.target 处夹爪中心距目标 0.04850 m（Muli=0.04850，阈值 0.05 m）",
-      "seconds": 0.08
+      "seconds": 0.093
     },
     {
       "id": "TC-ALG-018",
@@ -583,7 +583,7 @@
       "expected": "返回形状 (6,) 的有限实数数组；不返回 None、不含 NaN/Inf",
       "status": "OK",
       "actual": "返回形状 (6,) 的有限实数数组 action=[+1.000 -1.000 +1.000 -1.000 -1.000 +0.000]",
-      "seconds": 0.001
+      "seconds": 0.002
     },
     {
       "id": "TC-ALG-040",
@@ -598,7 +598,7 @@
       "expected": "动作量级与 1°/步 的预算相称，裁剪后不失真",
       "status": "OK",
       "actual": "50 组样本动作最大绝对值 1.000（env 侧裁剪为 [-1,1]，单位：度/步）",
-      "seconds": 0.042
+      "seconds": 0.053
     },
     {
       "id": "TC-ALG-041",
@@ -613,7 +613,7 @@
       "expected": "换回合后 step 重置为 1",
       "status": "OK",
       "actual": "连续 6 次后 step=6，换目标后 step=1（预期 1）",
-      "seconds": 0.005
+      "seconds": 0.006
     },
     {
       "id": "TC-ALG-042",
@@ -628,7 +628,7 @@
       "expected": "最终距离 ≤ 0.05 m",
       "status": "OK",
       "actual": "93 步结束，最终夹爪-目标距离 0.04850 m（阈值 0.05），得分 100.00",
-      "seconds": 0.079
+      "seconds": 0.1
     },
     {
       "id": "TC-ALG-043",
@@ -643,7 +643,7 @@
       "expected": "最终距离 ≤ 0.05 m",
       "status": "OK",
       "actual": "93 步结束，最终距离 0.04850 m，得分 100.00",
-      "seconds": 0.078
+      "seconds": 0.092
     },
     {
       "id": "TC-ALG-044",
@@ -658,7 +658,7 @@
       "expected": "最终距离 ≤ 0.05 m",
       "status": "OK",
       "actual": "92 步结束，最终距离 0.04850 m，得分 100.00",
-      "seconds": 0.077
+      "seconds": 0.082
     },
     {
       "id": "TC-ALG-045",
@@ -688,7 +688,7 @@
       "expected": "最终距离 ≤ 0.05 m",
       "status": "OK",
       "actual": "92 步结束，最终距离 0.04850 m，得分 100.00",
-      "seconds": 0.083
+      "seconds": 0.096
     },
     {
       "id": "TC-ALG-047",
@@ -703,7 +703,7 @@
       "expected": "最终距离 ≤ 0.05 m",
       "status": "OK",
       "actual": "低年级组：93 步结束，最终距离 0.04850 m，得分 100.00",
-      "seconds": 0.08
+      "seconds": 0.086
     },
     {
       "id": "TC-ALG-048",
@@ -718,7 +718,7 @@
       "expected": "成功率 ≥ 80%",
       "status": "OK",
       "actual": "10 个随机回合成功率 100%，最终距离均值 0.04850 m（要求 ≥80%）",
-      "seconds": 0.854
+      "seconds": 0.853
     },
     {
       "id": "TC-ALG-049",
@@ -748,7 +748,7 @@
       "expected": "回合在 100 步内正常终止",
       "status": "OK",
       "actual": "terminated=True，执行 93 步",
-      "seconds": 0.087
+      "seconds": 0.084
     },
     {
       "id": "TC-ALG-051",
@@ -778,7 +778,7 @@
       "expected": "max|action| ≤ 1.0",
       "status": "OK",
       "actual": "最大动作绝对值 1.000（契约上限 1.0，env.py:122-123 据此裁剪）；最差样本 action=[1.0, 1.0, 1.0, 1.0, 1.0, 0.0]",
-      "seconds": 0.005
+      "seconds": 0.003
     },
     {
       "id": "TC-ALG-053",
@@ -793,7 +793,7 @@
       "expected": "相邻步跳变 ≤ 30°",
       "status": "NG",
       "actual": "相邻步目标角最大跳变 177.4°（上限 30°），共 93 步",
-      "seconds": 0.087
+      "seconds": 0.089
     },
     {
       "id": "TC-ALG-054",
@@ -808,13 +808,13 @@
       "expected": "最终距离 ≤ 0.04 m（预留 ≥20% 余量）",
       "status": "NG",
       "actual": "93 步结束，最终距离 0.04850 m（余量要求 ≤0.04，成功阈值 0.05），得分 100.00",
-      "seconds": 0.079
+      "seconds": 0.092
     }
   ],
   "summary": {
-    "OK": 49,
+    "OK": 50,
     "POK": 0,
-    "NG": 4,
+    "NG": 3,
     "NT": 1
   },
   "total": 54
