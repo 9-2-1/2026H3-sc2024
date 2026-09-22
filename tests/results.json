@@ -13,7 +13,7 @@
       "expected": "返回形状 (6,) 的有限实数数组",
       "status": "OK",
       "actual": "action=[1.0, 1.0, 1.0, 1.0, 1.0, 0.0] shape=(6,)",
-      "seconds": 0.002
+      "seconds": 0.001
     },
     {
       "id": "TC-ALG-002",
@@ -73,7 +73,7 @@
       "expected": "正常返回动作，不抛异常",
       "status": "OK",
       "actual": "双参数调用成功，返回 ndarray",
-      "seconds": 0.017
+      "seconds": 0.014
     },
     {
       "id": "TC-ALG-006",
@@ -193,7 +193,7 @@
       "expected": "最大偏差 < 1e-6 m",
       "status": "OK",
       "actual": "30 组随机位姿最大位置偏差 0.00e+00 m（阈值 1e-6）",
-      "seconds": 0.012
+      "seconds": 0.01
     },
     {
       "id": "TC-ALG-014",
@@ -253,7 +253,7 @@
       "expected": "模型内偏差 ≤ 0.05 m",
       "status": "OK",
       "actual": "回合结束后，按模块自身 FK 计算 self.target 处夹爪中心距目标 0.04850 m（Muli=0.04850，阈值 0.05 m）",
-      "seconds": 0.093
+      "seconds": 0.079
     },
     {
       "id": "TC-ALG-018",
@@ -514,31 +514,31 @@
       "id": "TC-ALG-035",
       "module": "模块二",
       "item": "避障策略",
-      "title": "A5 恰为 -90 时不产生基座方向策略（边界）",
+      "title": "键盘对瞄准点的微调：键 1/2/3 配合 9/0",
       "level": "低",
-      "method": "边界值分析（边界 -90）",
-      "pre": "判定为 A5>-90 与 A5<-90，两者均为严格不等",
-      "input": "bdb = 40°（A5=-90）",
-      "steps": "检查 strategies 是否含 A1Left/A1Right",
-      "expected": "两者均不含",
-      "status": "NG",
-      "actual": "bdb=40.0000° A5=-90.0 时 strategies=['A1Right', 'A2Up', 'A3Up', 'A4Up']（不含 A1 方向）",
-      "seconds": 0.001
+      "method": "边界值分析（不按键 / 键 9 减 / 键 0 加）",
+      "pre": "get_action 的键盘通路仅在被传入 env 时生效；不按键时不得改变输出",
+      "input": "按住 键1+键9、键2+键0，以及不按键三种情形",
+      "steps": "传入按键替身 env 调用 get_action，读取 alg.xyz_target",
+      "expected": "不按键时 xyz_target 等于目标坐标；键1+9 时 x 减 0.005；键2+0 时 y 加 0.005",
+      "status": "OK",
+      "actual": "无键 xyz_target=[+0.000000 +0.850000 +0.200000]；键1+9 → [-0.005000 +0.850000 +0.200000]；键2+0 → [+0.000000 +0.855000 +0.200000]",
+      "seconds": 0.003
     },
     {
       "id": "TC-ALG-036",
       "module": "模块二",
       "item": "避障策略",
-      "title": "构造参数 DFL 强制覆盖查表姿态",
+      "title": "键盘强制覆盖查表姿态：键 4/5/6 配合 9/0",
       "level": "中",
-      "method": "等价类划分（参数覆盖）",
-      "pre": "构造时传入 A4/A5/A6",
-      "input": "MyCustomAlgorithm(A4=0, A5=-30, A6=45)，bdb=10°",
-      "steps": "调用 get_action 后读取 A4/A5/A6",
-      "expected": "A4=0, A5=-30, A6=45（覆盖查表结果 A5=-130）",
-      "status": "NT",
-      "actual": "TypeError: MyCustomAlgorithm.__init__() got an unexpected keyword argument 'A4'",
-      "seconds": 0.0
+      "method": "等价类划分（无键 / 键9 减 / 键0 加）",
+      "pre": "bdb=10° 时 sig_reset 查表给出 A4=0、A5=-130、A6=0",
+      "input": "按住 键5+键0、键4+键9、键6+键9，以及不按键四种情形",
+      "steps": "传入按键替身 env 调用 get_action，读取 alg.A4/A5/A6",
+      "expected": "无键保持 A4=0、A5=-130、A6=0；键5+0 → A5=-129；键4+9 → A4=-1；键6+9 → A6=-1",
+      "status": "OK",
+      "actual": "查表 A4=0.0 A5=-130.0 A6=0.0；键盘覆盖后 键5+0→A5=-129.0，键4+9→A4=-1.0，键6+9→A6=-1.0",
+      "seconds": 0.004
     },
     {
       "id": "TC-ALG-037",
@@ -583,7 +583,7 @@
       "expected": "返回形状 (6,) 的有限实数数组；不返回 None、不含 NaN/Inf",
       "status": "OK",
       "actual": "返回形状 (6,) 的有限实数数组 action=[+1.000 -1.000 +1.000 -1.000 -1.000 +0.000]",
-      "seconds": 0.002
+      "seconds": 0.001
     },
     {
       "id": "TC-ALG-040",
@@ -598,7 +598,7 @@
       "expected": "动作量级与 1°/步 的预算相称，裁剪后不失真",
       "status": "OK",
       "actual": "50 组样本动作最大绝对值 1.000（env 侧裁剪为 [-1,1]，单位：度/步）",
-      "seconds": 0.053
+      "seconds": 0.043
     },
     {
       "id": "TC-ALG-041",
@@ -628,7 +628,7 @@
       "expected": "最终距离 ≤ 0.05 m",
       "status": "OK",
       "actual": "93 步结束，最终夹爪-目标距离 0.04850 m（阈值 0.05），得分 100.00",
-      "seconds": 0.1
+      "seconds": 0.08
     },
     {
       "id": "TC-ALG-043",
@@ -643,7 +643,7 @@
       "expected": "最终距离 ≤ 0.05 m",
       "status": "OK",
       "actual": "93 步结束，最终距离 0.04850 m，得分 100.00",
-      "seconds": 0.092
+      "seconds": 0.084
     },
     {
       "id": "TC-ALG-044",
@@ -658,7 +658,7 @@
       "expected": "最终距离 ≤ 0.05 m",
       "status": "OK",
       "actual": "92 步结束，最终距离 0.04850 m，得分 100.00",
-      "seconds": 0.082
+      "seconds": 0.083
     },
     {
       "id": "TC-ALG-045",
@@ -673,7 +673,7 @@
       "expected": "最终距离 ≤ 0.05 m",
       "status": "OK",
       "actual": "92 步结束，最终距离 0.04850 m，得分 100.00",
-      "seconds": 0.079
+      "seconds": 0.083
     },
     {
       "id": "TC-ALG-046",
@@ -688,7 +688,7 @@
       "expected": "最终距离 ≤ 0.05 m",
       "status": "OK",
       "actual": "92 步结束，最终距离 0.04850 m，得分 100.00",
-      "seconds": 0.096
+      "seconds": 0.083
     },
     {
       "id": "TC-ALG-047",
@@ -703,7 +703,7 @@
       "expected": "最终距离 ≤ 0.05 m",
       "status": "OK",
       "actual": "低年级组：93 步结束，最终距离 0.04850 m，得分 100.00",
-      "seconds": 0.086
+      "seconds": 0.081
     },
     {
       "id": "TC-ALG-048",
@@ -718,7 +718,7 @@
       "expected": "成功率 ≥ 80%",
       "status": "OK",
       "actual": "10 个随机回合成功率 100%，最终距离均值 0.04850 m（要求 ≥80%）",
-      "seconds": 0.853
+      "seconds": 0.805
     },
     {
       "id": "TC-ALG-049",
@@ -748,7 +748,7 @@
       "expected": "回合在 100 步内正常终止",
       "status": "OK",
       "actual": "terminated=True，执行 93 步",
-      "seconds": 0.084
+      "seconds": 0.081
     },
     {
       "id": "TC-ALG-051",
@@ -793,7 +793,7 @@
       "expected": "相邻步跳变 ≤ 30°",
       "status": "NG",
       "actual": "相邻步目标角最大跳变 177.4°（上限 30°），共 93 步",
-      "seconds": 0.089
+      "seconds": 0.079
     },
     {
       "id": "TC-ALG-054",
@@ -808,14 +808,14 @@
       "expected": "最终距离 ≤ 0.04 m（预留 ≥20% 余量）",
       "status": "NG",
       "actual": "93 步结束，最终距离 0.04850 m（余量要求 ≤0.04，成功阈值 0.05），得分 100.00",
-      "seconds": 0.092
+      "seconds": 0.08
     }
   ],
   "summary": {
-    "OK": 50,
+    "OK": 52,
     "POK": 0,
-    "NG": 3,
-    "NT": 1
+    "NG": 2,
+    "NT": 0
   },
   "total": 54
 }

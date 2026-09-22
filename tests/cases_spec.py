@@ -496,22 +496,78 @@ def c034():
     return _check_wrist(10.0, exp_strategy='A1Right')
 
 
+def _keyed_env(keys, seed=1000):
+    """构造一个「按住某些键」的 Mock env，用于覆盖 get_action 的键盘微调通路。
+
+    对应 team_algorithm.py:341-359：键 1/2/3 选 xyz 轴、键 4/5/6 选 A4/A5/A6，
+    再配合键 9（减）/ 0（加）。不按键时该通路必须对输出无影响。
+    """
+    env = fresh_env(seed=seed)
+    env.p.pressed = {ord(k): 1 for k in keys}
+    return env
+
+
 def c035():
-    """边界值：A5 恰为 -90 时不应产生任何 A1 方向策略（> 与 < 均不成立）。"""
-    alg, bdb, bda = _wrist_for(40.0)
-    has = ('A1Left' in alg.strategies) or ('A1Right' in alg.strategies)
-    return ('OK' if not has else 'NG'), \
-        f'bdb={bdb:.4f}° A5={alg.A5:.1f} 时 strategies={sorted(alg.strategies)}（不含 A1 方向）'
+    """功能：按住数字键 1/2/3 配合 9/0 应微调 xyz_target（9 减、0 加，±0.005 m/步）。
+
+    这是 team_algorithm.py:341-351 的覆盖通路。每次探针都用**新造的观测数组**，
+    以免上一次调用对观测的就地修改串味（那正是 c055 单独钉住的问题）。
+    """
+    design = (0.0, 0.85, 0.2)
+    base = np.asarray(design, dtype=float)
+
+    def probe(keys):
+        alg = MyCustomAlgorithm()
+        _quiet(alg.get_action, obs_for_bdb(10.0, design=design), _keyed_env(keys))
+        return np.asarray(alg.xyz_target, dtype=float)
+
+    idle = probe('')                       # 不按键：不得被改动
+    down = probe('19')                     # 键1 + 键9 → x 减 0.005
+    up = probe('20')                       # 键2 + 键0 → y 加 0.005
+
+    want_idle = base
+    want_down = base + [-0.005, 0.0, 0.0]
+    want_up = base + [0.0, +0.005, 0.0]
+    bad = []
+    for tag, got, want in (('无键', idle, want_idle),
+                           ('键1+9', down, want_down),
+                           ('键2+0', up, want_up)):
+        if not np.allclose(got, want, atol=1e-12):
+            bad.append(f'{tag} 实测 {np.round(got, 4)} ≠ 预期 {np.round(want, 4)}')
+    if bad:
+        return 'NG', '；'.join(bad)
+    return 'OK', (f'无键 xyz_target={np.round(idle, 4)}；键1+9 → {np.round(down, 4)}；'
+                  f'键2+0 → {np.round(up, 4)}')
 
 
 def c036():
-    """功能：构造参数 DFL 应能强制覆盖查表得到的 A4/A5/A6。"""
-    alg = MyCustomAlgorithm(A4=0.0, A5=-30.0, A6=45.0)
-    obs = obs_for_bdb(10.0)   # 查表本应给出 A4=0, A5=-130
-    _quiet(alg.get_action, obs, None)
-    ok = (abs(alg.A4 - 0.0) < 1e-9 and abs(alg.A5 + 30.0) < 1e-9
-          and abs(alg.A6 - 45.0) < 1e-9)
-    return ('OK' if ok else 'NG'), f'DFL 覆盖后 A4={alg.A4:.1f} A5={alg.A5:.1f} A6={alg.A6:.1f}'
+    """功能：按住数字键 4/5/6 配合 9/0 应强制覆盖查表得到的 A4/A5/A6（±1°/步）。
+
+    原用例测的是构造参数 DFL，该机制已被键盘覆盖取代（team_algorithm.py:352-359），
+    这里改测现行的覆盖通路；bdb=10° 查表本应给出 A4=0、A5=-130、A6=0。
+    """
+    def probe(keys):
+        alg = MyCustomAlgorithm()
+        _quiet(alg.get_action, obs_for_bdb(10.0), _keyed_env(keys))
+        return (alg.A4, alg.A5, alg.A6)
+
+    base = probe('')                       # 无键：保持查表结果
+    a5_up = probe('50')                    # 键5 + 键0 → A5 +1
+    a4_dn = probe('49')                    # 键4 + 键9 → A4 -1
+    a6_dn = probe('69')                    # 键6 + 键9 → A6 -1
+
+    want_base = (0.0, -130.0, 0.0)
+    cases = (('无键', base, want_base),
+             ('键5+0', a5_up, (0.0, -129.0, 0.0)),
+             ('键4+9', a4_dn, (-1.0, -130.0, 0.0)),
+             ('键6+9', a6_dn, (0.0, -130.0, -1.0)))
+    bad = [f'{t} 实测 A4={g[0]:.1f} A5={g[1]:.1f} A6={g[2]:.1f} ≠ 预期 '
+           f'A4={w[0]:.1f} A5={w[1]:.1f} A6={w[2]:.1f}'
+           for t, g, w in cases if not np.allclose(g, w, atol=1e-9)]
+    if bad:
+        return 'NG', '；'.join(bad)
+    return 'OK', ('查表 A4=0.0 A5=-130.0 A6=0.0；键盘覆盖后 '
+                  f'键5+0→A5={a5_up[1]:.1f}，键4+9→A4={a4_dn[0]:.1f}，键6+9→A6={a6_dn[2]:.1f}')
 
 
 # =====================================================================
@@ -926,16 +982,20 @@ CASES = [
          inp='bdb = 10°（A5=-130）',
          steps='检查 strategies 集合是否含 A1Right',
          exp='strategies 含 A1Right', check=c034),
-    dict(id='TC-ALG-035', item='避障策略', title='A5 恰为 -90 时不产生基座方向策略（边界）', level='低',
-         pre='判定为 A5>-90 与 A5<-90，两者均为严格不等', method='边界值分析（边界 -90）',
-         inp='bdb = 40°（A5=-90）',
-         steps='检查 strategies 是否含 A1Left/A1Right',
-         exp='两者均不含', check=c035),
-    dict(id='TC-ALG-036', item='避障策略', title='构造参数 DFL 强制覆盖查表姿态', level='中',
-         pre='构造时传入 A4/A5/A6', method='等价类划分（参数覆盖）',
-         inp='MyCustomAlgorithm(A4=0, A5=-30, A6=45)，bdb=10°',
-         steps='调用 get_action 后读取 A4/A5/A6',
-         exp='A4=0, A5=-30, A6=45（覆盖查表结果 A5=-130）', check=c036),
+    dict(id='TC-ALG-035', item='避障策略', title='键盘对瞄准点的微调：键 1/2/3 配合 9/0', level='低',
+         pre='get_action 的键盘通路仅在被传入 env 时生效；不按键时不得改变输出',
+         method='边界值分析（不按键 / 键 9 减 / 键 0 加）',
+         inp='按住 键1+键9、键2+键0，以及不按键三种情形',
+         steps='传入按键替身 env 调用 get_action，读取 alg.xyz_target',
+         exp='不按键时 xyz_target 等于目标坐标；键1+9 时 x 减 0.005；键2+0 时 y 加 0.005',
+         check=c035),
+    dict(id='TC-ALG-036', item='避障策略', title='键盘强制覆盖查表姿态：键 4/5/6 配合 9/0', level='中',
+         pre='bdb=10° 时 sig_reset 查表给出 A4=0、A5=-130、A6=0',
+         method='等价类划分（无键 / 键9 减 / 键0 加）',
+         inp='按住 键5+键0、键4+键9、键6+键9，以及不按键四种情形',
+         steps='传入按键替身 env 调用 get_action，读取 alg.A4/A5/A6',
+         exp='无键保持 A4=0、A5=-130、A6=0；键5+0 → A5=-129；键4+9 → A4=-1；键6+9 → A6=-1',
+         check=c036),
     dict(id='TC-ALG-037', item='逆解健壮性', title='目标超工作空间时的数值健壮性', level='高',
          pre='机械臂 l2+l3 = 0.82001 m', method='边界值分析（可达半径外）',
          inp='目标 (0, 1.6, 0.2)，超出可达范围',
