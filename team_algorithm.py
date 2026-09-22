@@ -326,19 +326,23 @@ class MyCustomAlgorithm(BaseAlgorithm):
         angles = (args * 2 - 1) * 180
         design_target = observation[0][6:9]
         ball_target = observation[0][9:12]
+        # ⚠ 入库即拷贝：observation 的所有者是评测框架（env.get_observation()），
+        #   直接存切片会留下视图（np.shares_memory 为真），下游第 350/352 行对
+        #   xyz_target 的就地 += 会顺着别名改写调用方的观测，污染 next_obs 与
+        #   日志。缺陷 006 即此，回归用例 TC-ALG-055。
         if (design_target != self.design_target).any() or (
             ball_target != self.ball_target
         ).any():
             self.base_angles = angles
-            self.design_target = design_target
-            self.ball_target = ball_target
+            self.design_target = np.array(design_target, dtype=float)
+            self.ball_target = np.array(ball_target, dtype=float)
             self.sig_reset()
 
         # 暂时不动先。
         if self.target is None:
             self.target = angles
         if self.xyz_target is None or True:
-            self.xyz_target = design_target
+            self.xyz_target = np.array(design_target, dtype=float)
 
         if True:
             if env is not None:
