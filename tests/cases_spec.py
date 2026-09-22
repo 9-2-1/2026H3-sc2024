@@ -811,6 +811,79 @@ def c054():
         f'{steps} 步结束，最终距离 {dist:.5f} m（余量要求 ≤0.04，成功阈值 0.05），得分 {score:.2f}')
 
 
+def c055():
+    """接口契约：get_action 不得就地修改调用方传入的 observation。
+
+    observation 的所有者是评测框架（env.get_observation()），被测算法只应读。
+    若把它按切片存成视图，后续任何就地写都会顺着别名污染调用方。
+    """
+    design = (0.0, 0.85, 0.2)
+    obs = obs_for_bdb(10.0, design=design)
+    before = obs.copy()
+
+    alg = MyCustomAlgorithm()
+    _quiet(alg.get_action, obs, _keyed_env('19'))     # 按住键 1 + 9：微调 xyz_target
+
+    bad = []
+    if not np.array_equal(obs, before):
+        idx = np.nonzero(~np.isclose(obs, before))[1]
+        bad.append('调用方观测被就地改写：' + '，'.join(
+            f'obs[0][{i}] {before[0][i]:+.6f} → {obs[0][i]:+.6f}' for i in idx))
+    if np.shares_memory(alg.xyz_target, obs):
+        bad.append('self.xyz_target 与入参 observation 共享内存（别名泄漏），后续就地写会污染调用方')
+    if bad:
+        return 'NG', '；'.join(bad)
+    return 'OK', ('调用后 observation 逐位不变（长度 12 全等），'
+                  '且 self.xyz_target 与入参不共享内存')
+
+
+# 避障判定表的全部分档出口（bdb 请求值, bda 请求值）—— 对齐 sig_reset 的 10 个分支
+_WRIST_BRANCHES = (
+    (40.0, None), (20.0, None), (10.0, None), (7.0, None),
+    (4.0, None), (4.0, -0.40),        # bdb>3 的两支：bda>-0.28 / bda≤-0.28
+    (0.0, None), (-10.0, None), (-20.0, None), (-30.0, None),
+)
+# 关节限位换算成度：kinematics_ref.JOINT_LIMITS 的原生单位是弧度。
+_LIMITS_DEG = tuple((math.degrees(lo), math.degrees(hi)) for lo, hi in KR.JOINT_LIMITS)
+
+
+def c056():
+    """白盒：避障表每一档选出的姿态必须物理可实施，预言取自 URDF 关节限位（非查表誊抄）。
+
+    断言两件事，都以 fr5v6.urdf 的限位为外部真值：
+      1) 该档选出的求解输入 A4/A5/A6 落在 j4/j5/j6 限位内；
+      2) 据此解算并下达的目标角 alg.target 六个分量都落在各自限位内。
+    注意 ±100° 的行程与 100 步 × 1°/步的预算**恰好相等**，故此处只记录行程作为
+    观察值，不对余量下断言 —— 余量问题归模块一 c054（缺陷 003）。
+    """
+    bad, rows, travels = [], [], []
+    for bdb_req, bda_req in _WRIST_BRANCHES:
+        alg, bdb, bda = _wrist_for(bdb_req, bda_req)
+        wrist = (alg.A4, alg.A5, alg.A6)
+        target = np.asarray(alg.target, dtype=float)
+        tag = f'bdb={bdb:.2f}° bda={bda:.3f}'
+
+        for name, val, j in (('A4', wrist[0], 3), ('A5', wrist[1], 4), ('A6', wrist[2], 5)):
+            lo, hi = _LIMITS_DEG[j]
+            if not lo - 1e-9 <= val <= hi + 1e-9:
+                bad.append(f'{tag} {name}={val:.1f}° 超出 j{j+1} 限位 ({lo:.1f}, {hi:.1f})°')
+
+        over = [f'j{i+1}={target[i]:.1f}°∉({_LIMITS_DEG[i][0]:.1f}, {_LIMITS_DEG[i][1]:.1f})°'
+                for i in range(6)
+                if not _LIMITS_DEG[i][0] - 1e-9 <= target[i] <= _LIMITS_DEG[i][1] + 1e-9]
+        if over:
+            bad.append(f'{tag} 下达的目标角越限：' + '，'.join(over))
+
+        rows.append(f'bdb={bdb:.0f}°→A4={wrist[0]:.0f} A5={wrist[1]:.0f} A6={wrist[2]:.0f}')
+        travels.append(float(np.max(np.abs(target - np.asarray(alg.base_angles, dtype=float)))))
+
+    if bad:
+        return 'NG', '；'.join(bad)
+    return 'OK', (f'{len(_WRIST_BRANCHES)} 档姿态的 A4/A5/A6 与下达目标角全部落在 URDF 关节限位内'
+                  f'（{"；".join(rows)}）；最大单关节行程 {max(travels):.1f}°，'
+                  '与 100 步 × 1°/步 的预算持平')
+
+
 CASES = [
     dict(id='TC-ALG-001', item='输入解析', title='中立位观测下正常返回六轴动作', level='高',
          pre='模块已实例化，观测为 (1,12) 标准格式', method='等价类划分（有效等价类）',
@@ -1088,6 +1161,16 @@ CASES = [
          inp='目标 (0,0.85,0.2)，障碍 (0,0.6,0.2)',
          steps='跑完整回合并记录最终夹爪-目标距离',
          exp='最终距离 ≤ 0.04 m（预留 ≥20% 余量）', check=c054),
+    dict(id='TC-ALG-055', item='接口契约', title='观测入参不得被 get_action 就地修改', level='高',
+         pre='observation 由 env.get_observation() 构造，所有权属于评测框架', method='代码审查 + 边界值分析（含键盘微调通路）',
+         inp='观测 (1,12)，Mock env 按住键 1 与键 9',
+         steps='调用 get_action(obs, env)，比对调用前后 obs 是否逐位相同，并检查内部状态与入参是否共享内存',
+         exp='obs 逐位不变，且内部状态不与入参共享内存', check=c055),
+    dict(id='TC-ALG-056', item='避障策略', title='各档避障姿态均落在 URDF 关节限位内', level='高',
+         pre='关节限位取自 fr5v6.urdf（kinematics_ref.JOINT_LIMITS，弧度）', method='白盒遍历 + 边界值分析（限位边界）',
+         inp='避障判定表 10 个分档出口（bdb=40/20/10/7/4/4(bda≤-0.28)/0/-10/-20/-30）',
+         steps='逐档取 sig_reset 选出的 A4/A5/A6 与解算后下达的 alg.target，与限位逐位比对',
+         exp='A4/A5/A6 在 j4/j5/j6 限位内，且 alg.target 六分量均在各自限位内', check=c056),
 ]
 
 
